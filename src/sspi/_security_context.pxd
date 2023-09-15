@@ -4,7 +4,7 @@
 from ._win32_types cimport *
 
 
-cdef class Credential:
-    cdef CredHandle handle
+cdef class SecurityContext:
+    cdef CtxtHandle handle
     cdef TimeStamp raw_expiry
     cdef int needs_free

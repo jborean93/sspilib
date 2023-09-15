@@ -50,6 +50,8 @@ if not SKIP_EXTENSIONS:
 
     for e in [
         "credential",
+        "security_buffer",
+        "security_context",
         "security_package",
         "text",
         # ("acquire_credentials_handle", "AcquireCredentialsHandleW"),

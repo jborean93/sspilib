@@ -70,6 +70,7 @@ cdef extern from "Security.h":
         PTimeStamp     ptsExpiry
     ) nogil
 
+    # https://learn.microsoft.com/en-us/windows/win32/api/sspi/nf-sspi-freecredentialshandle
     SECURITY_STATUS FreeCredentialsHandle(
         PCredHandle phCredential
     ) nogil

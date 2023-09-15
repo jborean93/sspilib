@@ -8,6 +8,7 @@ import enum
 
 from cpython.exc cimport PyErr_SetFromWindowsErr
 
+from sspi._security_buffer cimport FreeContextBuffer
 from sspi._text cimport WideCharString, wide_char_to_str
 from sspi._win32_types cimport *
 

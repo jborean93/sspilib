@@ -25,6 +25,9 @@ cdef extern from "Windows.h":
     ctypedef SecHandle CredHandle
     ctypedef PSecHandle PCredHandle
 
+    ctypedef SecHandle CtxtHandle
+    ctypedef PSecHandle PCtxtHandle
+
     cdef struct _SECURITY_INTEGER:
         unsigned long LowPart
         long          HighPart
@@ -32,8 +35,3 @@ cdef extern from "Windows.h":
     ctypedef SECURITY_INTEGER *PSECURITY_INTEGER
     ctypedef SECURITY_INTEGER TimeStamp
     ctypedef SECURITY_INTEGER *PTimeStamp
-
-    # https://learn.microsoft.com/en-us/windows/win32/api/sspi/nf-sspi-freecontextbuffer
-    SECURITY_STATUS FreeContextBuffer(
-        PVOID pvContextBuffer
-    )
