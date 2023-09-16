@@ -50,6 +50,7 @@ if not SKIP_EXTENSIONS:
 
     for e in [
         "credential",
+        "ntstatus",
         "security_buffer",
         "security_context",
         "security_package",

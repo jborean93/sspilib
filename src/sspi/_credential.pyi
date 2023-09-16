@@ -56,7 +56,7 @@ class WinNTAuthIdentity(AuthIdentity):
 
     This is an authentication data object that contains the username and
     password information for a user. It can be used with the ``auth_data``
-    kwarg on :meth:`acquire_credentials_handle` to acquire a creddential with
+    kwarg on :meth:`acquire_credentials_handle` to acquire a credential with
     an explicit username/password.
 
     If using the Netlogon form ``DOMAIN\\username``, the ``username`` arg is
@@ -104,7 +104,7 @@ class WinNTAuthIdentity(AuthIdentity):
         """Custom flags associated with the identity."""
     @property
     def package_list(self) -> str | None:
-        """A comman-separated list of security packages that are available to the Negotiate provider."""
+        """A comma-separated list of security packages that are available to the Negotiate provider."""
 
 def acquire_credentials_handle(
     principal: str | None,

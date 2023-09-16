@@ -8,3 +8,6 @@ cdef class SecurityContext:
     cdef CtxtHandle handle
     cdef TimeStamp raw_expiry
     cdef int needs_free
+
+cdef class InitiatorSecurityContext(SecurityContext):
+    cdef unsigned long raw_context_attr
