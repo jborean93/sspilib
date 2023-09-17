@@ -5,9 +5,6 @@ from ._win32_types cimport *
 
 
 cdef class SecurityContext:
-    cdef CtxtHandle handle
+    cdef CtxtHandle raw
     cdef TimeStamp raw_expiry
-    cdef int needs_free
-
-cdef class InitiatorSecurityContext(SecurityContext):
-    cdef unsigned long raw_context_attr
+    cdef int _needs_free

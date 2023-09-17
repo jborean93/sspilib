@@ -38,4 +38,7 @@ cdef str wide_char_to_str(
     const wchar_t *value,
     int size = -1,
 ):
+    if value == NULL:
+        return None
+
     return <object>PyUnicode_FromWideChar(value, size)

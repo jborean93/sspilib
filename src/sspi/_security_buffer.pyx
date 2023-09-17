@@ -93,6 +93,7 @@ class SecBufferType(enum.IntEnum):
 
 cdef class SecBufferDesc:
     # cdef _SecBufferDesc raw
+    # cdef SecBuffer[:] _buffers
 
     def __cinit__(
         SecBufferDesc self,
@@ -110,11 +111,17 @@ cdef class SecBufferDesc:
 
             for idx, buffer in enumerate(buffers):
                 src = (<SecBuffer>buffer).raw
-                dst = self.raw.pBuffers[idx]
 
-                dst.cbBuffer = src.cbBuffer
-                dst.BufferType = src.BufferType
-                dst.pvBuffer = src.pvBuffer
+                self.raw.pBuffers[idx].cbBuffer = src.cbBuffer
+                self.raw.pBuffers[idx].BufferType = src.BufferType
+                self.raw.pBuffers[idx].pvBuffer = src.pvBuffer
+
+    def __dealloc__(SecBufferDesc self):
+        if self.raw.pBuffers:
+            free(self.raw.pBuffers)
+            self.raw.pBuffers = NULL
+            self.raw.cBuffers = 0
+        self._buffers = []
 
     def __iter__(SecBufferDesc self) -> list[SecBuffer]:
         return self._buffers.__iter__()
@@ -123,24 +130,27 @@ cdef class SecBufferDesc:
         return self.raw.cBuffers
 
     def __getitem__(SecBufferDesc self, key: int) -> SecBuffer:
+        # FIXME: Add checks for the index.
         return self._buffers[key]
+
+    cdef void mark_as_allocated(SecBufferDesc self):
+        for buffer in self._buffers:
+            (<SecBuffer>buffer)._needs_free = 1
 
     cdef void sync_buffers(SecBufferDesc self):
         for idx in range(self.raw.cBuffers):
-            src = self.raw.pBuffers[idx]
-            dst = (<SecBuffer>self._buffers[idx]).raw
-
-            dst.cbBuffer = src.cbBuffer
-            dst.BufferType = src.BufferType
-            dst.pvBuffer = src.pvBuffer
+            (<SecBuffer>self._buffers[idx]).raw.cbBuffer = self.raw.pBuffers[idx].cbBuffer
+            (<SecBuffer>self._buffers[idx]).raw.BufferType = self.raw.pBuffers[idx].BufferType
+            (<SecBuffer>self._buffers[idx]).raw.pvBuffer = self.raw.pBuffers[idx].pvBuffer
 
     @property
     def version(SecBuffer self) -> int:
         return self.raw.ulVersion
 
 cdef class SecBuffer:
-    cdef _SecBuffer raw
-    cdef unsigned char[:] _buffer
+    # cdef _SecBuffer raw
+    # cdef unsigned char[:] _buffer
+    # cdef int _needs_free
 
     def __cinit__(
         SecBuffer self,
@@ -159,9 +169,18 @@ cdef class SecBuffer:
             self.raw.cbBuffer = 0
             self.raw.pvBuffer = NULL
 
+    def __dealloc__(SecBuffer self):
+        if self.raw.pvBuffer and self._needs_free:
+            FreeContextBuffer(self.raw.pvBuffer)
+            self._needs_free = 0
+
+        self.raw.pvBuffer = NULL
+        self.raw.cbBuffer = 0
+        self.raw.BufferType = _SECBUFFER_EMPTY
+
     def __repr__(SecBuffer self) -> str:
         kwargs = [f"{k}={v}" for k, v in {
-            'data': self.data,
+            'data': repr(self.data),
             'buffer_type': self.buffer_type,
             'buffer_flags': self.buffer_flags,
         }.items()]
@@ -181,11 +200,8 @@ cdef class SecBuffer:
         return self.raw.cbBuffer
 
     @property
-    def data(SecBuffer self) -> bytes | None:
-        if self.raw.pvBuffer == NULL or self.raw.cbBuffer == 0:
-            return None
-        else:
-            return (<char *>self.raw.pvBuffer)[:self.raw.cbBuffer]
+    def data(SecBuffer self) -> bytes:
+        return bytes(self.dangerous_get_view())
 
     @property
     def buffer_type(SecBuffer self) -> SecBufferType:
@@ -196,13 +212,7 @@ cdef class SecBuffer:
         return SecBufferFlags(self.raw.BufferType & _SECBUFFER_ATTRMASK)
 
     def dangerous_get_view(SecBuffer self) -> memoryview:
-        raise NotImplementedError()
-
-def free_context_buffer(
-    SecBuffer buffer not None,
-) -> None:
-    with nogil:
-        res = FreeContextBuffer(&buffer.raw)
-
-    if res:
-        PyErr_SetFromWindowsErr(res)
+        if self.raw.pvBuffer == NULL or self.raw.cbBuffer == 0:
+            return memoryview(b"")
+        else:
+            return memoryview(<char[:self.raw.cbBuffer]>self.raw.pvBuffer)

@@ -3,7 +3,9 @@
 
 from ._credential import (
     AuthIdentity,
+    Credential,
     CredentialUse,
+    WinNTAuthFlags,
     WinNTAuthIdentity,
     acquire_credentials_handle,
 )
@@ -14,7 +16,6 @@ from ._security_buffer import (
     SecBufferDesc,
     SecBufferFlags,
     SecBufferType,
-    free_context_buffer,
 )
 from ._security_context import (
     AcceptContextResult,
@@ -44,6 +45,7 @@ __all__ = [
     "AscReq",
     "AscRet",
     "AuthIdentity",
+    "Credential",
     "CredentialUse",
     "InitializeContextResult",
     "InitiatorSecurityContext",
@@ -58,11 +60,11 @@ __all__ = [
     "SecurityPackageCapability",
     "SecurityContext",
     "TargetDataRep",
+    "WinNTAuthFlags",
     "WinNTAuthIdentity",
     "accept_security_context",
     "acquire_credentials_handle",
     "complete_auth_token",
     "enumerate_security_packages",
     "initialize_security_context",
-    "free_context_buffer",
 ]

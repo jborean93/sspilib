@@ -5,6 +5,6 @@ from ._win32_types cimport *
 
 
 cdef class Credential:
-    cdef CredHandle handle
+    cdef CredHandle raw
     cdef TimeStamp raw_expiry
     cdef int needs_free

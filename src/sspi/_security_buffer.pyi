@@ -123,8 +123,8 @@ class SecBuffer:
 
     The ``data`` property will create a copy of the buffer bytes while
     :meth:`dangerous_get_view` can be used to get a view of the data pointed by
-    the buffer. Be careful not to use the view returned once the buffer has
-    been freed.
+    the buffer without any copying. Be careful not to use the view returned
+    once the buffer has been freed.
 
     Args:
         data: A bytearray or memoryview to a writable bytes buffer containing
@@ -144,8 +144,8 @@ class SecBuffer:
     def count(self) -> int:
         """The length of the buffer."""
     @property
-    def data(self) -> bytes | None:
-        """A copy of the buffer or None if empty."""
+    def data(self) -> bytes:
+        """A copy of the buffer bytes."""
     @property
     def buffer_type(self) -> SecBufferType:
         """The buffer type."""
@@ -153,23 +153,11 @@ class SecBuffer:
     def buffer_flags(self) -> SecBufferFlags:
         """The buffer flags."""
     def dangerous_get_view(self) -> memoryview:
-        """A view to the raw buffer bytes, this is only valid if the buffer has not been freed."""
+        """The buffer memoryview.
 
-def free_context_buffer(
-    buffer: SecBuffer,
-) -> None:
-    """Frees memory buffers.
-
-    Frees the memory of a buffer allocated by SSPI. This should only be called
-    if a buffer contains memory allocated by SSPI as requested. For example
-    a buffer outputted by :meth:`initialize_security_context` with
-    ``ISC_REQ_ALLOCATE_MEMORY`` specified.
-
-    This wraps the `FreeContextBuffer`_ Win32 function.
-
-    Args:
-        buffer: The SecBuffer containing the data allocated by SSPI.
-
-    .. _FreeContextBuffer:
-        https://learn.microsoft.com/en-us/windows/win32/api/sspi/nf-sspi-freecontextbuffer
-    """
+        This returns a memoryview to the raw buffer bytes in memory. While this
+        does not copy the data from the buffer, it is only valid if the buffer
+        has not been freed. As the memoryview is a reference to unmanaged
+        memory it is critical that the view is not used once the buffer is
+        freed. To get a copy of the bytes in a safer fashion use :meth:`data`.
+        """

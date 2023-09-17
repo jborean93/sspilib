@@ -7,7 +7,7 @@ import enum
 
 from cpython.exc cimport PyErr_SetFromWindowsErr
 
-from sspi._text cimport WideCharString
+from sspi._text cimport WideCharString, wide_char_to_str
 from sspi._win32_types cimport *
 
 
@@ -97,13 +97,13 @@ class WinNTAuthFlags(enum.IntFlag):
     SEC_WINNT_AUTH_IDENTITY_FLAGS_ID_PROVIDER = _SEC_WINNT_AUTH_IDENTITY_FLAGS_ID_PROVIDER
 
 cdef class Credential:
-    # cdef CredHandle handle
+    # cdef CredHandle raw
     # cdef TimeStamp raw_expiry
     # cdef int needs_free
 
     def __dealloc__(Credential self):
         if self.needs_free:
-            FreeCredentialsHandle(&self.handle)
+            FreeCredentialsHandle(&self.raw)
             self.needs_free = 0
 
     @property
@@ -134,24 +134,20 @@ cdef class WinNTAuthIdentity(AuthIdentity):
         self.raw.Version = SEC_WINNT_AUTH_IDENTITY_VERSION
         self.raw.Length = <unsigned long>sizeof(SEC_WINNT_AUTH_IDENTITY_EXW)
 
-        self._username = username
         self.username_raw = WideCharString(username)
         self.raw.User = <unsigned short*>self.username_raw.buffer
         self.raw.UserLength = <unsigned long>self.username_raw.length
 
-        self._domain = domain
         self.domain_raw = WideCharString(domain)
         self.raw.Domain = <unsigned short*>self.domain_raw.buffer
         self.raw.DomainLength = <unsigned long>self.domain_raw.length
 
-        self._password = password
         self.password_raw = WideCharString(password)
         self.raw.Password = <unsigned short*>self.password_raw.buffer
         self.raw.PasswordLength = <unsigned long>self.password_raw.length
 
-        self._raw.Flags = int(flags) | _SEC_WINNT_AUTH_IDENTITY_UNICODE
+        self.raw.Flags = int(flags) | _SEC_WINNT_AUTH_IDENTITY_UNICODE
 
-        self._package_list = package_list
         self.package_list_raw = WideCharString(package_list)
         self.raw.PackageList = <unsigned short*>self.package_list_raw.buffer
         self.raw.PackageListLength = <unsigned long>self.package_list_raw.length
@@ -161,11 +157,11 @@ cdef class WinNTAuthIdentity(AuthIdentity):
 
     def __repr__(WinNTAuthIdentity self) -> str:
         kwargs = [f"{k}={v}" for k, v in {
-            'username': self.username,
-            'domain': self.domain,
-            'password': self.password,
+            'username': repr(self.username),
+            'domain': repr(self.domain),
+            'password': repr(self.password),
             'flags': self.flags,
-            'package_list': self.package_list,
+            'package_list': repr(self.package_list),
         }.items()]
 
         return f"WinNTAuthIdentity({', '.join(kwargs)})"
@@ -179,23 +175,23 @@ cdef class WinNTAuthIdentity(AuthIdentity):
 
     @property
     def username(self) -> str | None:
-        return self._username
+        return wide_char_to_str(<wchar_t *>self.raw.User, self.raw.UserLength)
 
     @property
     def domain(self) -> str | None:
-        return self._domain
+        return wide_char_to_str(<wchar_t *>self.raw.Domain, self.raw.DomainLength)
 
     @property
     def password(self) -> str | None:
-        return self._password
+        return wide_char_to_str(<wchar_t *>self.raw.Password, self.raw.PasswordLength)
 
     @property
     def flags(self) -> WinNTAuthFlags:
-        return WinNTAuthFlags(self._raw.Flags)
+        return WinNTAuthFlags(self.raw.Flags)
 
     @property
     def package_list(self) -> str | None:
-        return self._package_list
+        return wide_char_to_str(<wchar_t *>self.raw.PackageList, self.raw.PackageListLength)
 
 def acquire_credentials_handle(
     str principal,
@@ -221,7 +217,7 @@ def acquire_credentials_handle(
             auth_data_buffer,
             NULL,
             NULL,
-            &cred.handle,
+            &cred.raw,
             &cred.raw_expiry
         )
 

@@ -25,5 +25,12 @@ cdef extern from "Security.h":
 
 cdef class SecBufferDesc:
     cdef _SecBufferDesc raw
+    cdef list[SecBuffer] _buffers
 
+    cdef void mark_as_allocated(SecBufferDesc self)
     cdef void sync_buffers(SecBufferDesc self)
+
+cdef class SecBuffer:
+    cdef _SecBuffer raw
+    cdef unsigned char[:] _buffer
+    cdef int _needs_free

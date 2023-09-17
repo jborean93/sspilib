@@ -283,28 +283,28 @@ class IscRet(enum.IntFlag):
     ISC_RET_CONFIDENTIALITY_ONLY = _ISC_RET_CONFIDENTIALITY_ONLY
 
 cdef class SecurityContext:
-    # cdef CtxtHandle handle
+    # cdef CtxtHandle raw
     # cdef TimeStamp raw_expiry
-    # cdef int needs_free
+    # cdef int _needs_free
 
     def __dealloc__(SecurityContext self):
-        if self.needs_free:
-            DeleteSecurityContext(&self.handle)
-            self.needs_free = 0
+        if self._needs_free:
+            DeleteSecurityContext(&self.raw)
+            self._needs_free = 0
 
     @property
     def expiry(SecurityContext self) -> int:
         return (<unsigned long long>self.raw_expiry.HighPart << 32) | self.raw_expiry.LowPart
 
 cdef class AcceptorSecurityContext(SecurityContext):
-    # cdef unsigned long raw_context_attr
+    cdef unsigned long raw_context_attr
 
     @property
     def context_attr(AcceptorSecurityContext self) -> AscRet:
         return AscRet(self.raw_context_attr)
 
 cdef class InitiatorSecurityContext(SecurityContext):
-    # cdef unsigned long raw_context_attr
+    cdef unsigned long raw_context_attr
 
     @property
     def context_attr(InitiatorSecurityContext self) -> IscRet:
@@ -330,12 +330,12 @@ def accept_security_context(
 ) -> AcceptContextResult:
     cdef PCredHandle cred_handle = NULL
     if credential:
-        cred_handle = &credential.handle
+        cred_handle = &credential.raw
 
     cdef PCtxtHandle in_context = NULL
-    cdef InitiatorSecurityContext out_context = None
+    cdef AcceptorSecurityContext out_context = None
     if context:
-        in_context = &context.handle
+        in_context = &context.raw
         out_context = context
     else:
         in_context = NULL
@@ -355,7 +355,7 @@ def accept_security_context(
             input_buffers_raw,
             context_req,
             target_data_rep,
-            &out_context.handle,
+            &out_context.raw,
             output_buffers_raw,
             &out_context.raw_context_attr,
             &out_context.raw_expiry,
@@ -369,11 +369,11 @@ def accept_security_context(
     ]:
         PyErr_SetFromWindowsErr(res)
 
-    if input_buffers:
-        input_buffers.sync_buffers()
     if output_buffers:
         output_buffers.sync_buffers()
-    out_context.needs_free = 1
+        if context_req & _ASC_REQ_ALLOCATE_MEMORY:
+            output_buffers.mark_as_allocated()
+    out_context._needs_free = 1
 
     return AcceptContextResult(
         context=out_context,
@@ -386,14 +386,12 @@ def complete_auth_token(
 ) -> None:
     with nogil:
         res = CompleteAuthToken(
-            &context.handle,
+            &context.raw,
             &token.raw,
         )
 
     if res:
         PyErr_SetFromWindowsErr(res)
-
-    token.sync_buffers()
 
 def initialize_security_context(
     Credential credential,
@@ -406,12 +404,12 @@ def initialize_security_context(
 ) -> InitializeContextResult:
     cdef PCredHandle cred_handle = NULL
     if credential:
-        cred_handle = &credential.handle
+        cred_handle = &credential.raw
 
     cdef PCtxtHandle in_context = NULL
     cdef InitiatorSecurityContext out_context = None
     if context:
-        in_context = &context.handle
+        in_context = &context.raw
         out_context = context
     else:
         in_context = NULL
@@ -436,7 +434,7 @@ def initialize_security_context(
             target_data_rep,
             input_buffers_raw,
             0,
-            &out_context.handle,
+            &out_context.raw,
             output_buffers_raw,
             &out_context.raw_context_attr,
             &out_context.raw_expiry,
@@ -450,11 +448,11 @@ def initialize_security_context(
     ]:
         PyErr_SetFromWindowsErr(res)
 
-    if input_buffers:
-        input_buffers.sync_buffers()
     if output_buffers:
         output_buffers.sync_buffers()
-    out_context.needs_free = 1
+        if context_req & _ISC_REQ_ALLOCATE_MEMORY:
+            output_buffers.mark_as_allocated()
+    out_context._needs_free = 1
 
     return InitializeContextResult(
         context=out_context,
