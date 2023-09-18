@@ -16,6 +16,7 @@ from ._security_buffer import (
     SecBufferDesc,
     SecBufferFlags,
     SecBufferType,
+    SecChannelBindings,
 )
 from ._security_context import (
     AcceptContextResult,
@@ -56,6 +57,7 @@ __all__ = [
     "SecBufferDesc",
     "SecBufferFlags",
     "SecBufferType",
+    "SecChannelBindings",
     "SecPkgInfo",
     "SecurityPackageCapability",
     "SecurityContext",

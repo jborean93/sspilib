@@ -156,8 +156,66 @@ class SecBuffer:
         """The buffer memoryview.
 
         This returns a memoryview to the raw buffer bytes in memory. While this
-        does not copy the data from the buffer, it is only valid if the buffer
-        has not been freed. As the memoryview is a reference to unmanaged
-        memory it is critical that the view is not used once the buffer is
-        freed. To get a copy of the bytes in a safer fashion use :meth:`data`.
+        does not copy the data from the buffer, it is only valid if the class
+        instance has not been deallocated. As the memoryview is a reference to
+        unmanaged memory it is critical that the view is not used once the
+        buffer is deallocated. To get a copy of the bytes in a safer fashion
+        use :meth:`data`.
+        """
+
+class SecChannelBindings:
+    """Channel binding information.
+
+    Specifies channel binding information for a security context. SSPI only
+    uses the application_data property but others might used for interop with
+    other implementations. Any value passed in will be copied to an internal
+    buffer as SSPI requires it to be placed in contiguous memory. The properties
+    will return a copy of the values if set as well.
+
+    Use :meth:`dangerous_get_view` to get a raw writable view of the internal
+    data structure for use in a :class:`SecBuffer` value. Be careful as this
+    view is only valid for the life of the object it came from. Editing the
+    values or using once the structure was deallocated can cause undefined
+    behaviour.
+
+    Args:
+        initiator_addr_type: The type of the initiator/client address.
+        initiator_addr: The initiator address.
+        acceptor_addr_type: The type of the acceptor/server address.
+        acceptor_addr: The acceptor address.
+        application_data: The channel binding data.
+    """
+
+    def __init__(
+        self,
+        *,
+        initiator_addr_type: int = 0,
+        initiator_addr: bytes | bytearray | memoryview | None = None,
+        acceptor_addr_type: int = 0,
+        acceptor_addr: bytes | bytearray | memoryview | None = None,
+        application_data: bytes | bytearray | memoryview | None = None,
+    ) -> None: ...
+    @property
+    def initiator_addr_type(self) -> int:
+        """The initiator address type."""
+    @property
+    def initiator_addr(self) -> bytes | None:
+        """A copy of the initiator address or None if not present."""
+    @property
+    def acceptor_addr_type(self) -> int:
+        """The acceptor address type."""
+    @property
+    def acceptor_addr(self) -> bytes | None:
+        """A copy of the acceptor address or None if not present."""
+    @property
+    def application_data(self) -> bytes | None:
+        """A copy of the application data or None if not present."""
+    def dangerous_get_view(self) -> memoryview:
+        """The structure memoryview.
+
+        This returns a memoryview to the raw structs bytes in memory. While
+        this does not copy the data from the pointer, it is only valid if the
+        class instance has not been deallocated. As the memoryview is a
+        reference to unmanaged memory, it is critical that the view is not used
+        onces the buffer is deallocated.
         """

@@ -4,7 +4,7 @@
 from __future__ import annotations
 
 from cpython.exc cimport PyErr_SetFromWindowsErr
-from libc.stdlib cimport calloc, free
+from libc.stdlib cimport calloc, free, malloc
 
 import dataclasses
 import enum
@@ -48,6 +48,18 @@ cdef extern from "Security.h":
     unsigned long _SECBUFFER_READONLY "SECBUFFER_READONLY"
     unsigned long _SECBUFFER_READONLY_WITH_CHECKSUM "SECBUFFER_READONLY_WITH_CHECKSUM"
     unsigned long _SECBUFFER_RESERVED "SECBUFFER_RESERVED"
+
+    cdef struct _SEC_CHANNEL_BINDINGS:
+        unsigned long  dwInitiatorAddrType
+        unsigned long  cbInitiatorLength
+        unsigned long  dwInitiatorOffset
+        unsigned long  dwAcceptorAddrType
+        unsigned long  cbAcceptorLength
+        unsigned long  dwAcceptorOffset
+        unsigned long  cbApplicationDataLength
+        unsigned long  dwApplicationDataOffset
+    ctypedef _SEC_CHANNEL_BINDINGS SEC_CHANNEL_BINDINGS
+    ctypedef SEC_CHANNEL_BINDINGS *PSEC_CHANNEL_BINDINGS
 
 SECBUFFER_VERSION = _SECBUFFER_VERSION
 
@@ -216,3 +228,126 @@ cdef class SecBuffer:
             return memoryview(b"")
         else:
             return memoryview(<char[:self.raw.cbBuffer]>self.raw.pvBuffer)
+
+
+cdef class SecChannelBindings:
+    cdef PSEC_CHANNEL_BINDINGS raw
+
+    def __init__(
+        SecChannelBindings self,
+        *,
+        unsigned long initiator_addr_type = 0,
+        const unsigned char[:] initiator_addr = None,
+        unsigned long acceptor_addr_type = 0,
+        const unsigned char[:] acceptor_addr = None,
+        const unsigned char[:] application_data = None,
+    ):
+        offset = sizeof(SEC_CHANNEL_BINDINGS)
+
+        initiator_offset = 0
+        initiator_len = 0
+        if initiator_addr is not None:
+            initiator_offset = offset
+            initiator_len = len(initiator_addr)
+            offset += initiator_len
+
+        acceptor_offset = 0
+        acceptor_len = 0
+        if acceptor_addr is not None:
+            acceptor_offset = offset
+            acceptor_len = len(acceptor_addr)
+            offset += acceptor_len
+
+        application_offset = 0
+        application_len = 0
+        if application_data is not None:
+            application_offset = offset
+            application_len = len(application_data)
+
+        raw_length = sizeof(SEC_CHANNEL_BINDINGS) + initiator_len + acceptor_len + application_len
+        self.raw = <PSEC_CHANNEL_BINDINGS>malloc(raw_length)
+        if not self.raw:
+            raise MemoryError("Cannot calloc SecChannelBindings buffers")
+
+        cdef unsigned char[:] raw_ptr = <unsigned char[:raw_length]><unsigned char*>self.raw
+
+        self.raw.dwInitiatorAddrType = initiator_addr_type
+        self.raw.cbInitiatorLength = initiator_len
+        self.raw.dwInitiatorOffset = initiator_offset
+        if initiator_offset:
+            raw_ptr[initiator_offset : initiator_offset + initiator_len] = initiator_addr.copy()
+
+        self.raw.dwAcceptorAddrType = acceptor_addr_type
+        self.raw.cbAcceptorLength = acceptor_len
+        self.raw.dwAcceptorOffset = acceptor_offset
+        if acceptor_offset:
+            raw_ptr[acceptor_offset : acceptor_offset + acceptor_len] = acceptor_addr.copy()
+
+        self.raw.cbApplicationDataLength = application_len
+        self.raw.dwApplicationDataOffset = application_offset
+        if application_offset:
+            raw_ptr[application_offset : application_offset + application_len] = application_data.copy()
+
+    def __dealloc__(SecChannelBindings self):
+        if self.raw:
+            free(self.raw)
+            self.raw = NULL
+
+    def __repr__(SecChannelBindings self) -> str:
+        kwargs = [f"{k}={v}" for k, v in {
+            'initiator_addr_type': self.initiator_addr_type,
+            'initiator_addr': repr(self.initiator_addr),
+            'acceptor_addr_type': self.acceptor_addr_type,
+            'acceptor_addr': repr(self.acceptor_addr),
+            'application_data': repr(self.application_data),
+        }.items()]
+
+        return f"SecChannelBindings({', '.join(kwargs)})"
+
+    @property
+    def initiator_addr_type(SecChannelBindings self) -> int:
+        return self.raw.dwInitiatorAddrType
+
+    @property
+    def initiator_addr(SecChannelBindings self) -> bytes | None:
+        val_len = self.raw.cbInitiatorLength
+        val_offset = self.raw.dwInitiatorOffset
+
+        if val_offset:
+            return (<char *>self.raw)[val_offset : val_offset + val_len]
+
+        else:
+            return None
+
+    @property
+    def acceptor_addr_type(SecChannelBindings self) -> int | None:
+        return self.raw.dwAcceptorAddrType
+
+    @property
+    def acceptor_addr(SecChannelBindings self) -> bytes:
+        val_len = self.raw.cbAcceptorLength
+        val_offset = self.raw.dwAcceptorOffset
+
+        if val_offset:
+            return (<char *>self.raw)[val_offset : val_offset + val_len]
+
+        else:
+            return None
+
+    @property
+    def application_data(SecChannelBindings self) -> bytes | None:
+        val_len = self.raw.cbApplicationDataLength
+        val_offset = self.raw.dwApplicationDataOffset
+
+        if val_offset:
+            return (<char *>self.raw)[val_offset : val_offset + val_len]
+
+        else:
+            return None
+
+    def dangerous_get_view(SecChannelBindings self) -> memoryview:
+        data_len = sizeof(SEC_CHANNEL_BINDINGS) + \
+            self.raw.cbInitiatorLength + \
+            self.raw.cbAcceptorLength + \
+            self.raw.cbApplicationDataLength
+        return memoryview(<char[:data_len]><char*>self.raw)

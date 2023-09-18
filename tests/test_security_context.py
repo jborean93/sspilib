@@ -336,6 +336,125 @@ def test_invalid_credential() -> None:
     assert e.value.winerror == -2146893044  # SEC_E_LOGON_DENIED
 
 
+def test_sec_exchange_with_channel_binding() -> None:
+    spn = f"host/{socket.gethostname()}"
+    buffer = bytearray(4096)
+    channel_bindings = sspi.SecChannelBindings(
+        application_data=b"tls-server-end-point:" + (b"\x00" * 32),
+    )
+
+    c_cred = sspi.acquire_credentials_handle(None, "NTLM", sspi.CredentialUse.SECPKG_CRED_OUTBOUND)
+    c_input_buffers = sspi.SecBufferDesc(
+        [
+            sspi.SecBuffer(channel_bindings.dangerous_get_view(), sspi.SecBufferType.SECBUFFER_CHANNEL_BINDINGS),
+        ]
+    )
+    c_output_buffers = sspi.SecBufferDesc(
+        [
+            sspi.SecBuffer(buffer, sspi.SecBufferType.SECBUFFER_TOKEN),
+        ]
+    )
+    c_res = sspi.initialize_security_context(
+        credential=c_cred,
+        context=None,
+        target_name=spn,
+        context_req=0,
+        target_data_rep=sspi.TargetDataRep.SECURITY_NATIVE_DREP,
+        input_buffers=c_input_buffers,
+        output_buffers=c_output_buffers,
+    )
+    assert isinstance(c_res, sspi.InitializeContextResult)
+    assert isinstance(c_res.context, sspi.InitiatorSecurityContext)
+    assert isinstance(c_res.context.context_attr, sspi.IscRet)
+    assert c_res.context.expiry > 0
+    assert isinstance(c_res.result, sspi.NtStatus)
+    assert c_res.result == sspi.NtStatus.SEC_I_CONTINUE_NEEDED
+
+    assert c_output_buffers[0].buffer_type == sspi.SecBufferType.SECBUFFER_TOKEN
+    assert c_output_buffers[0].buffer_flags == sspi.SecBufferFlags.SECBUFFER_NONE
+
+    s_cred = sspi.acquire_credentials_handle(None, "Negotiate", sspi.CredentialUse.SECPKG_CRED_INBOUND)
+    s_input_buffers = sspi.SecBufferDesc(
+        [
+            sspi.SecBuffer(c_output_buffers[0].dangerous_get_view(), sspi.SecBufferType.SECBUFFER_TOKEN),
+            sspi.SecBuffer(channel_bindings.dangerous_get_view(), sspi.SecBufferType.SECBUFFER_CHANNEL_BINDINGS),
+        ]
+    )
+    s_output_buffers = sspi.SecBufferDesc(
+        [
+            sspi.SecBuffer(buffer, sspi.SecBufferType.SECBUFFER_TOKEN),
+        ]
+    )
+    s_res = sspi.accept_security_context(
+        credential=s_cred,
+        context=None,
+        input_buffers=s_input_buffers,
+        context_req=0,
+        target_data_rep=sspi.TargetDataRep.SECURITY_NATIVE_DREP,
+        output_buffers=s_output_buffers,
+    )
+    assert isinstance(s_res, sspi.AcceptContextResult)
+    assert isinstance(s_res.context, sspi.AcceptorSecurityContext)
+    assert isinstance(s_res.context.context_attr, sspi.AscRet)
+    assert s_res.context.expiry > 0
+    assert isinstance(s_res.result, sspi.NtStatus)
+    assert s_res.result == sspi.NtStatus.SEC_I_CONTINUE_NEEDED
+
+    assert s_output_buffers[0].buffer_type == sspi.SecBufferType.SECBUFFER_TOKEN
+    assert s_output_buffers[0].buffer_flags == sspi.SecBufferFlags.SECBUFFER_NONE
+
+    c_input_buffers = sspi.SecBufferDesc(
+        [
+            sspi.SecBuffer(s_output_buffers[0].dangerous_get_view(), sspi.SecBufferType.SECBUFFER_TOKEN),
+            sspi.SecBuffer(channel_bindings.dangerous_get_view(), sspi.SecBufferType.SECBUFFER_CHANNEL_BINDINGS),
+        ]
+    )
+    c_output_buffers = sspi.SecBufferDesc(
+        [
+            sspi.SecBuffer(buffer, sspi.SecBufferType.SECBUFFER_TOKEN),
+        ]
+    )
+    c_res = sspi.initialize_security_context(
+        credential=c_cred,
+        context=c_res.context,
+        target_name=spn,
+        context_req=0,
+        target_data_rep=sspi.TargetDataRep.SECURITY_NATIVE_DREP,
+        input_buffers=c_input_buffers,
+        output_buffers=c_output_buffers,
+    )
+    assert isinstance(c_res, sspi.InitializeContextResult)
+    assert isinstance(c_res.context, sspi.InitiatorSecurityContext)
+    assert isinstance(c_res.context.context_attr, sspi.IscRet)
+    assert c_res.context.expiry > 0
+    assert isinstance(c_res.result, sspi.NtStatus)
+    assert c_res.result == sspi.NtStatus.SEC_E_OK
+
+    assert c_output_buffers[0].buffer_type == sspi.SecBufferType.SECBUFFER_TOKEN
+    assert c_output_buffers[0].buffer_flags == sspi.SecBufferFlags.SECBUFFER_NONE
+
+    s_input_buffers = sspi.SecBufferDesc(
+        [
+            sspi.SecBuffer(c_output_buffers[0].dangerous_get_view(), sspi.SecBufferType.SECBUFFER_TOKEN),
+            sspi.SecBuffer(channel_bindings.dangerous_get_view(), sspi.SecBufferType.SECBUFFER_CHANNEL_BINDINGS),
+        ]
+    )
+    s_res = sspi.accept_security_context(
+        credential=s_cred,
+        context=s_res.context,
+        input_buffers=s_input_buffers,
+        context_req=0,
+        target_data_rep=sspi.TargetDataRep.SECURITY_NATIVE_DREP,
+        output_buffers=None,
+    )
+    assert isinstance(s_res, sspi.AcceptContextResult)
+    assert isinstance(s_res.context, sspi.AcceptorSecurityContext)
+    assert isinstance(s_res.context.context_attr, sspi.AscRet)
+    assert s_res.context.expiry > 0
+    assert isinstance(s_res.result, sspi.NtStatus)
+    assert s_res.result == sspi.NtStatus.SEC_E_OK
+
+
 def test_sec_exchange_allowed_package_list() -> None:
     spn = f"host/{socket.gethostname()}"
     buffer = bytearray(4096)
