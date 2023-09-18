@@ -106,7 +106,7 @@ class SecBufferDesc:
     ) -> None: ...
     def __iter__(self) -> list[SecBuffer]:
         """Creates an iterable of the contained buffers."""
-    def __l0en__(self) -> int:
+    def __len__(self) -> int:
         """Returns the number of buffers in this structure."""
     def __getitem__(self, key: int) -> SecBuffer:
         """Gets the buffer at the specified index."""

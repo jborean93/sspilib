@@ -3,7 +3,116 @@
 
 from __future__ import annotations
 
+import pytest
+
 import sspi
+
+
+def test_empty_sec_buffer_desc() -> None:
+    buffers = sspi.SecBufferDesc([])
+    assert len(buffers) == 0
+    assert list(iter(buffers)) == []
+    assert buffers.version == 0
+
+
+def test_sec_buffer_desc_version() -> None:
+    buffers = sspi.SecBufferDesc([], version=1)
+    assert buffers.version == 1
+
+
+def test_sec_buffer_desc_indexing() -> None:
+    buffers = sspi.SecBufferDesc(
+        [
+            sspi.SecBuffer(bytearray(b"1"), sspi.SecBufferType.SECBUFFER_DATA, sspi.SecBufferFlags.SECBUFFER_READONLY),
+            sspi.SecBuffer(bytearray(b"2"), sspi.SecBufferType.SECBUFFER_TOKEN),
+            sspi.SecBuffer(None, sspi.SecBufferType.SECBUFFER_PADDING),
+        ]
+    )
+
+    assert len(buffers) == 3
+
+    assert isinstance(buffers[0], sspi.SecBuffer)
+    assert buffers[0].buffer_type == sspi.SecBufferType.SECBUFFER_DATA
+    assert buffers[0].buffer_flags == sspi.SecBufferFlags.SECBUFFER_READONLY
+    assert buffers[0].count == 1
+    assert buffers[0].data == b"1"
+
+    assert isinstance(buffers[1], sspi.SecBuffer)
+    assert buffers[1].buffer_type == sspi.SecBufferType.SECBUFFER_TOKEN
+    assert buffers[1].buffer_flags == sspi.SecBufferFlags.SECBUFFER_NONE
+    assert buffers[1].count == 1
+    assert buffers[1].data == b"2"
+
+    assert isinstance(buffers[2], sspi.SecBuffer)
+    assert buffers[2].buffer_type == sspi.SecBufferType.SECBUFFER_PADDING
+    assert buffers[2].buffer_flags == sspi.SecBufferFlags.SECBUFFER_NONE
+    assert buffers[2].count == 0
+    assert buffers[2].data == b""
+
+    assert buffers[-1] == buffers[2]
+    assert buffers[-2] == buffers[1]
+    assert buffers[-3] == buffers[0]
+
+    with pytest.raises(IndexError):
+        buffers[3]
+
+    with pytest.raises(IndexError):
+        buffers[-4]
+
+
+def test_sec_buffer_bytearray() -> None:
+    data = bytearray(b"data")
+    buffer = sspi.SecBuffer(data, sspi.SecBufferType.SECBUFFER_DATA)
+
+    assert buffer.count == 4
+    assert buffer.data == b"data"
+    assert buffer.buffer_type == sspi.SecBufferType.SECBUFFER_DATA
+    assert buffer.buffer_flags == sspi.SecBufferFlags.SECBUFFER_NONE
+    assert repr(buffer) == "SecBuffer(data=bytearray(b'data'), buffer_type=1, buffer_flags=0)"
+    assert str(buffer) == "SECBUFFER_DATA"
+    assert bytes(buffer.dangerous_get_view()) == b"data"
+
+
+def test_sec_buffer_memoryview() -> None:
+    data = bytearray(b"data")
+    buffer = sspi.SecBuffer(
+        memoryview(data),
+        sspi.SecBufferType.SECBUFFER_TOKEN,
+        sspi.SecBufferFlags.SECBUFFER_READONLY_WITH_CHECKSUM,
+    )
+
+    assert buffer.count == 4
+    assert buffer.data == b"data"
+    assert buffer.buffer_type == sspi.SecBufferType.SECBUFFER_TOKEN
+    assert buffer.buffer_flags == sspi.SecBufferFlags.SECBUFFER_READONLY_WITH_CHECKSUM
+    assert repr(buffer) == "SecBuffer(data=bytearray(b'data'), buffer_type=2, buffer_flags=268435456)"
+    assert str(buffer) == "SECBUFFER_TOKEN|SECBUFFER_READONLY_WITH_CHECKSUM"
+    assert bytes(buffer.dangerous_get_view()) == b"data"
+
+
+def test_sec_buffer_empty() -> None:
+    data = bytearray(b"")
+    buffer = sspi.SecBuffer(data, sspi.SecBufferType.SECBUFFER_DATA)
+
+    assert buffer.count == 0
+    assert buffer.data == b""
+    assert buffer.buffer_type == sspi.SecBufferType.SECBUFFER_DATA
+    assert buffer.buffer_flags == sspi.SecBufferFlags.SECBUFFER_NONE
+    assert repr(buffer) == "SecBuffer(data=bytearray(b''), buffer_type=1, buffer_flags=0)"
+    assert str(buffer) == "SECBUFFER_DATA"
+    assert bytes(buffer.dangerous_get_view()) == b""
+
+
+def test_sec_buffer_none() -> None:
+    buffer = sspi.SecBuffer(None, sspi.SecBufferType.SECBUFFER_DATA)
+
+    assert buffer.count == 0
+    assert buffer.data == b""
+    assert buffer.buffer_type == sspi.SecBufferType.SECBUFFER_DATA
+    assert buffer.buffer_flags == sspi.SecBufferFlags.SECBUFFER_NONE
+    assert repr(buffer) == "SecBuffer(data=bytearray(b''), buffer_type=1, buffer_flags=0)"
+    assert str(buffer) == "SECBUFFER_DATA"
+    assert bytes(buffer.dangerous_get_view()) == b""
 
 
 def test_sec_channel_bindings_nothing() -> None:

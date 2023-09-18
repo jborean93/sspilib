@@ -10,6 +10,13 @@ from ._credential import (
     acquire_credentials_handle,
 )
 from ._ntstatus import NtStatus
+from ._query_context import (
+    SecPkgBuffer,
+    SecPkgContextNames,
+    SecPkgContextSessionKey,
+    SecPkgContextSizes,
+    query_context_attributes,
+)
 from ._security_buffer import (
     SECBUFFER_VERSION,
     SecBuffer,
@@ -58,6 +65,10 @@ __all__ = [
     "SecBufferFlags",
     "SecBufferType",
     "SecChannelBindings",
+    "SecPkgBuffer",
+    "SecPkgContextNames",
+    "SecPkgContextSessionKey",
+    "SecPkgContextSizes",
     "SecPkgInfo",
     "SecurityPackageCapability",
     "SecurityContext",
@@ -69,4 +80,5 @@ __all__ = [
     "complete_auth_token",
     "enumerate_security_packages",
     "initialize_security_context",
+    "query_context_attributes",
 ]

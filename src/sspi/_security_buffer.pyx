@@ -142,7 +142,6 @@ cdef class SecBufferDesc:
         return self.raw.cBuffers
 
     def __getitem__(SecBufferDesc self, key: int) -> SecBuffer:
-        # FIXME: Add checks for the index.
         return self._buffers[key]
 
     cdef void mark_as_allocated(SecBufferDesc self):
@@ -192,7 +191,7 @@ cdef class SecBuffer:
 
     def __repr__(SecBuffer self) -> str:
         kwargs = [f"{k}={v}" for k, v in {
-            'data': repr(self.data),
+            'data': f"bytearray({self.data!r})",
             'buffer_type': self.buffer_type,
             'buffer_flags': self.buffer_flags,
         }.items()]
