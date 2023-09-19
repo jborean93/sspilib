@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import enum
+import typing as t
 
 SECBUFFER_VERSION: int = 0  #: Constant for SecBufferDesc version
 
@@ -85,7 +86,7 @@ class SecBufferType(enum.IntEnum):
     SECBUFFER_CERTIFICATE_REQUEST_CONTEXT = ...
     """The buffer contains the TLS 1.3 certificate request context."""
 
-class SecBufferDesc:
+class SecBufferDesc(t.Iterable):
     """An array of SecBuffer structures.
 
     This type is used to encapsulate an array of :class:`SecBuffer` instances
@@ -104,7 +105,7 @@ class SecBufferDesc:
         *,
         version: int = SECBUFFER_VERSION,
     ) -> None: ...
-    def __iter__(self) -> list[SecBuffer]:
+    def __iter__(self) -> t.Iterator[SecBuffer]:
         """Creates an iterable of the contained buffers."""
     def __len__(self) -> int:
         """Returns the number of buffers in this structure."""
