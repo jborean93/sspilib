@@ -7,7 +7,10 @@ from libc.stddef cimport size_t, wchar_t
 cdef extern from "Windows.h":
     ctypedef void *PVOID;
 
+    ctypedef unsigned short USHORT
+
     ctypedef long LONG
+    ctypedef unsigned long ULONG
     ctypedef LONG SECURITY_STATUS
 
     ctypedef wchar_t WCHAR

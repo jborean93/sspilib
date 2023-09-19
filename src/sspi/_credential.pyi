@@ -137,6 +137,9 @@ def acquire_credentials_handle(
     Returns:
         Credential: The acquired credential object.
 
+    Raises:
+        WindowsError: If the function failed.
+
     .. _AcquireCredentialsHandle:
         https://learn.microsoft.com/en-us/windows/win32/secauthn/acquirecredentialshandle--general
     """

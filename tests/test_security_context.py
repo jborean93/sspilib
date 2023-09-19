@@ -341,14 +341,10 @@ def test_sec_exchange_with_channel_binding() -> None:
     buffer = bytearray(4096)
     channel_bindings = sspi.SecChannelBindings(
         application_data=b"tls-server-end-point:" + (b"\x00" * 32),
-    )
+    ).get_sec_buffer_copy()
 
     c_cred = sspi.acquire_credentials_handle(None, "NTLM", sspi.CredentialUse.SECPKG_CRED_OUTBOUND)
-    c_input_buffers = sspi.SecBufferDesc(
-        [
-            sspi.SecBuffer(channel_bindings.dangerous_get_view(), sspi.SecBufferType.SECBUFFER_CHANNEL_BINDINGS),
-        ]
-    )
+    c_input_buffers = sspi.SecBufferDesc([channel_bindings])
     c_output_buffers = sspi.SecBufferDesc(
         [
             sspi.SecBuffer(buffer, sspi.SecBufferType.SECBUFFER_TOKEN),
@@ -377,7 +373,7 @@ def test_sec_exchange_with_channel_binding() -> None:
     s_input_buffers = sspi.SecBufferDesc(
         [
             sspi.SecBuffer(c_output_buffers[0].dangerous_get_view(), sspi.SecBufferType.SECBUFFER_TOKEN),
-            sspi.SecBuffer(channel_bindings.dangerous_get_view(), sspi.SecBufferType.SECBUFFER_CHANNEL_BINDINGS),
+            channel_bindings,
         ]
     )
     s_output_buffers = sspi.SecBufferDesc(
@@ -406,7 +402,7 @@ def test_sec_exchange_with_channel_binding() -> None:
     c_input_buffers = sspi.SecBufferDesc(
         [
             sspi.SecBuffer(s_output_buffers[0].dangerous_get_view(), sspi.SecBufferType.SECBUFFER_TOKEN),
-            sspi.SecBuffer(channel_bindings.dangerous_get_view(), sspi.SecBufferType.SECBUFFER_CHANNEL_BINDINGS),
+            channel_bindings,
         ]
     )
     c_output_buffers = sspi.SecBufferDesc(
@@ -436,7 +432,7 @@ def test_sec_exchange_with_channel_binding() -> None:
     s_input_buffers = sspi.SecBufferDesc(
         [
             sspi.SecBuffer(c_output_buffers[0].dangerous_get_view(), sspi.SecBufferType.SECBUFFER_TOKEN),
-            sspi.SecBuffer(channel_bindings.dangerous_get_view(), sspi.SecBufferType.SECBUFFER_CHANNEL_BINDINGS),
+            channel_bindings,
         ]
     )
     s_res = sspi.accept_security_context(

@@ -41,16 +41,6 @@ cdef extern from "Security.h":
     unsigned long _SECPKG_FLAG_CREDENTIAL_ISOLATION_ENABLED "SECPKG_FLAG_CREDENTIAL_ISOLATION_ENABLED"
     unsigned long _SECPKG_FLAG_APPLY_LOOPBACK "SECPKG_FLAG_APPLY_LOOPBACK"
 
-    cdef struct _SecPkgInfoW:
-        unsigned long fCapabilities
-        unsigned short wVersion
-        unsigned short wRPCID
-        unsigned long cbMaxToken
-        SEC_WCHAR *Name
-        SEC_WCHAR *Comment
-    ctypedef _SecPkgInfoW SecPkgInfoW
-    ctypedef SecPkgInfoW *PSecPkgInfoW
-
     # https://learn.microsoft.com/en-us/windows/win32/api/sspi/nf-sspi-enumeratesecuritypackagesw
     SECURITY_STATUS EnumerateSecurityPackagesW(
         unsigned long *pcPackages,

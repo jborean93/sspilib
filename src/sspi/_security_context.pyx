@@ -415,7 +415,7 @@ def initialize_security_context(
         in_context = NULL
         out_context = InitiatorSecurityContext()
 
-    cdef WideCharString target_name_wstr = WideCharString(target_name)
+    cdef WideCharString target_name_wchar = WideCharString(target_name)
 
     cdef PSecBufferDesc input_buffers_raw = NULL
     if input_buffers:
@@ -428,7 +428,7 @@ def initialize_security_context(
         res = InitializeSecurityContextW(
             cred_handle,
             in_context,
-            target_name_wstr.buffer,
+            target_name_wchar.raw,
             context_req,
             0,
             target_data_rep,

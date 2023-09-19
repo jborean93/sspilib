@@ -9,11 +9,13 @@ import enum
 from cpython.exc cimport PyErr_SetFromWindowsErr
 
 from sspi._security_buffer cimport FreeContextBuffer
-from sspi._security_context cimport PCtxtHandle, SecurityContext
+from sspi._security_context cimport SecurityContext
+from sspi._security_package cimport PSecPkgInfoW
 from sspi._text cimport wide_char_to_str
 from sspi._win32_types cimport *
 
 from sspi._ntstatus import NtStatus
+from sspi._security_package import SecurityPackageCapability
 
 
 cdef extern from "Security.h":
@@ -60,6 +62,11 @@ cdef extern from "Security.h":
     ctypedef _SecPkgContext_NamesW SecPkgContext_NamesW
     ctypedef SecPkgContext_NamesW *PSecPkgContext_NamesW
 
+    cdef struct _SecPkgContext_PackageInfoW:
+        PSecPkgInfoW PackageInfo
+    ctypedef _SecPkgContext_PackageInfoW SecPkgContext_PackageInfoW
+    ctypedef SecPkgContext_PackageInfoW *PSecPkgContext_PackageInfoW
+
     cdef struct _SecPkgContext_Sizes:
         unsigned long cbMaxToken
         unsigned long cbMaxSignature
@@ -81,12 +88,12 @@ cdef extern from "Security.h":
         void          *pBuffer
     ) nogil
 
-cdef class SecPkgBuffer:
+cdef class SecPkgContext:
 
-    cdef (unsigned long, void *) __c_value__(SecPkgBuffer self):
+    cdef (unsigned long, void *) __c_value__(SecPkgContext self):
         return (0, NULL)
 
-cdef class SecPkgContextNames(SecPkgBuffer):
+cdef class SecPkgContextNames(SecPkgContext):
     cdef SecPkgContext_NamesW raw
 
     def __dealloc__(SecPkgContextNames self):
@@ -107,7 +114,54 @@ cdef class SecPkgContextNames(SecPkgBuffer):
         else:
             return wide_char_to_str(self.raw.sUserName)
 
-cdef class SecPkgContextSessionKey(SecPkgBuffer):
+cdef class SecPkgContextPackageInfo(SecPkgContext):
+    cdef SecPkgContext_PackageInfoW raw
+
+    def __dealloc__(SecPkgContextPackageInfo self):
+        if self.raw.PackageInfo:
+            FreeContextBuffer(self.raw.PackageInfo)
+            self.raw.PackageInfo = NULL
+
+    cdef (unsigned long, void *) __c_value__(SecPkgContextPackageInfo self):
+        return (SECPKG_ATTR_PACKAGE_INFO, &self.raw)
+
+    def __repr__(SecPkgContextPackageInfo self):
+        kwargs = [f"{k}={v}" for k, v in {
+            'capabilities': self.capabilities.value,
+            'version': self.version,
+            'rpcid': self.rpcid,
+            'max_token': self.max_token,
+            'name': repr(self.name),
+            'comment': repr(self.comment),
+        }.items()]
+
+        return f"SecPkgContextPackageInfo({', '.join(kwargs)})"
+
+    @property
+    def capabilities(SecPkgContextPackageInfo self) -> SecurityPackageCapability:
+        return SecurityPackageCapability(self.raw.PackageInfo.fCapabilities)
+
+    @property
+    def version(SecPkgContextPackageInfo self) -> int:
+        return self.raw.PackageInfo.wVersion
+
+    @property
+    def rpcid(SecPkgContextPackageInfo self) -> int:
+        return self.raw.PackageInfo.wRPCID
+
+    @property
+    def max_token(SecPkgContextPackageInfo self) -> int:
+        return self.raw.PackageInfo.cbMaxToken
+
+    @property
+    def name(SecPkgContextPackageInfo self) -> str:
+        return wide_char_to_str(self.raw.PackageInfo.Name, size=-1, none_is_empty=1)
+
+    @property
+    def comment(SecPkgContextPackageInfo self) -> str:
+        return wide_char_to_str(self.raw.PackageInfo.Comment, size=-1, none_is_empty=1)
+
+cdef class SecPkgContextSessionKey(SecPkgContext):
     cdef SecPkgContext_SessionKey raw
 
     def __dealloc__(SecPkgContextSessionKey self):
@@ -129,7 +183,7 @@ cdef class SecPkgContextSessionKey(SecPkgBuffer):
         else:
             return b""
 
-cdef class SecPkgContextSizes(SecPkgBuffer):
+cdef class SecPkgContextSizes(SecPkgContext):
     cdef SecPkgContext_Sizes raw
 
     cdef (unsigned long, void *) __c_value__(SecPkgContextSizes self):
@@ -164,11 +218,11 @@ cdef class SecPkgContextSizes(SecPkgBuffer):
 def query_context_attributes(
     SecurityContext context not None,
     type attribute not None,
-) -> SecPkgBuffer:
-    if not issubclass(attribute, SecPkgBuffer):
-        raise TypeError("attribute must be a type of SecPkgBuffer")
+) -> SecPkgContext:
+    if not issubclass(attribute, SecPkgContext):
+        raise TypeError("attribute must be a type of SecPkgContext")
 
-    cdef SecPkgBuffer value = attribute()
+    cdef SecPkgContext value = attribute()
     cdef (unsigned long, void*) raw = value.__c_value__()
 
     with nogil:

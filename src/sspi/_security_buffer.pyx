@@ -266,7 +266,7 @@ cdef class SecChannelBindings:
         raw_length = sizeof(SEC_CHANNEL_BINDINGS) + initiator_len + acceptor_len + application_len
         self.raw = <PSEC_CHANNEL_BINDINGS>malloc(raw_length)
         if not self.raw:
-            raise MemoryError("Cannot calloc SecChannelBindings buffers")
+            raise MemoryError("Cannot malloc SecChannelBindings buffers")
 
         cdef unsigned char[:] raw_ptr = <unsigned char[:raw_length]><unsigned char*>self.raw
 
@@ -291,6 +291,13 @@ cdef class SecChannelBindings:
         if self.raw:
             free(self.raw)
             self.raw = NULL
+
+    cdef char[:] get_raw_view(SecChannelBindings self):
+        data_len = sizeof(SEC_CHANNEL_BINDINGS) + \
+            self.raw.cbInitiatorLength + \
+            self.raw.cbAcceptorLength + \
+            self.raw.cbApplicationDataLength
+        return <char[:data_len]><char*>self.raw
 
     def __repr__(SecChannelBindings self) -> str:
         kwargs = [f"{k}={v}" for k, v in {
@@ -344,9 +351,15 @@ cdef class SecChannelBindings:
         else:
             return None
 
-    def dangerous_get_view(SecChannelBindings self) -> memoryview:
+    def get_sec_buffer_copy(SecChannelBindings self) -> SecBuffer:
+        data = bytearray(self.get_raw_view())
+        return SecBuffer(data, _SECBUFFER_CHANNEL_BINDINGS)
+
+    def dangerous_get_sec_buffer(SecChannelBindings self) -> SecBuffer:
         data_len = sizeof(SEC_CHANNEL_BINDINGS) + \
             self.raw.cbInitiatorLength + \
             self.raw.cbAcceptorLength + \
             self.raw.cbApplicationDataLength
-        return memoryview(<char[:data_len]><char*>self.raw)
+        view = memoryview(<char[:data_len]><char*>self.raw)
+
+        return SecBuffer(view, _SECBUFFER_CHANNEL_BINDINGS)

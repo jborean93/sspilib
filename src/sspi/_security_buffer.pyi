@@ -172,11 +172,16 @@ class SecChannelBindings:
     buffer as SSPI requires it to be placed in contiguous memory. The properties
     will return a copy of the values if set as well.
 
-    Use :meth:`dangerous_get_view` to get a raw writable view of the internal
-    data structure for use in a :class:`SecBuffer` value. Be careful as this
-    view is only valid for the life of the object it came from. Editing the
-    values or using once the structure was deallocated can cause undefined
-    behaviour.
+    The methods :meth:`get_sec_buffer_copy` and :meth:`dangerous_get_buffer`
+    can be used to get a :class:`SecBuffer` that contains this structure value.
+    The former copies the underlying bytes so is less efficient but is safer to
+    use. The latter method uses a reference so the returned buffer will only be
+    valid until the instance it came from was not deallocated.
+
+    This wraps the `SEC_CHANNEL_BINDINGS`_ Win32 structure.
+
+    .. _SEC_CHANNEL_BINDINGS:
+        https://learn.microsoft.com/en-us/windows/win32/api/sspi/ns-sspi-sec_channel_bindings
 
     Args:
         initiator_addr_type: The type of the initiator/client address.
@@ -210,12 +215,36 @@ class SecChannelBindings:
     @property
     def application_data(self) -> bytes | None:
         """A copy of the application data or None if not present."""
-    def dangerous_get_view(self) -> memoryview:
-        """The structure memoryview.
+    def get_sec_buffer_copy(self) -> SecBuffer:
+        """The SecBuffer value.
 
-        This returns a memoryview to the raw structs bytes in memory. While
-        this does not copy the data from the pointer, it is only valid if the
-        class instance has not been deallocated. As the memoryview is a
-        reference to unmanaged memory, it is critical that the view is not used
-        onces the buffer is deallocated.
+        This returns a :class:`SecBuffer` object that can be used as part of a
+        security input buffer. Unlike :meth:`dangerous_get_sec_buffer` it will
+        create the buffer with a copy of the underlying bytes making it safe to
+        use beyond the lifetime of the instance it came from.
+
+        Use :meth:`dangerous_get_sec_buffer` to use a more efficient method of
+        creating the buffer (no memory copies) if you can guarantee it will
+        only be used when this instance is still referenced and not
+        deallocated.
+
+        Returns:
+            SecBuffer: The security buffer with the copied memory.
+        """
+    def dangerous_get_sec_buffer(self) -> SecBuffer:
+        """The SecBuffer value.
+
+        This returns a :class:`SecBuffer` object that can be used as part of a
+        security input buffer. It is marked as dangerous as it does not copy
+        the underlying bytes but uses a pointer to the unmanaged memory for the
+        buffer. It is critical the returned buffer is not used once this object
+        has been deallocated as it will invalidate the memory the buffer points
+        to.
+
+        A safer alternative is to use the :meth:`get_sec_buffer_copy` to get a
+        :class:`SecBuffer` that contains the copied struct bytes rather than a
+        reference.
+
+        Returns:
+            SecBuffer: The security buffer with the referenced memory.
         """

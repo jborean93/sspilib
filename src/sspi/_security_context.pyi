@@ -363,6 +363,9 @@ def accept_security_context(
         InitializeContextResult: Contains the security context and NtStatus
         result from the call.
 
+    Raises:
+        WindowsError: If the function failed.
+
     .. _AcceptSecurityContext:
         https://learn.microsoft.com/en-us/windows/win32/secauthn/acceptsecuritycontext--general
     """
@@ -385,6 +388,9 @@ def complete_auth_token(
     Args:
         context: A handle of the context that needs to be completed.
         token: A SecBufferDesc that contains the token to be completed.
+
+    Raises:
+        WindowsError: If the function failed.
 
     .. _CompleteAuthToken:
         https://learn.microsoft.com/en-us/windows/win32/api/sspi/nf-sspi-completeauthtoken
@@ -467,6 +473,9 @@ def initialize_security_context(
     Returns:
         InitializeContextResult: Contains the security context and NtStatus
         result from the call.
+
+    Raises:
+        WindowsError: If the function failed.
 
     .. _InitializeSecurityContext:
         https://learn.microsoft.com/en-us/windows/win32/secauthn/initializesecuritycontext--general

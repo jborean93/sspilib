@@ -49,9 +49,11 @@ if not SKIP_EXTENSIONS:
     sspi = ctypes.CDLL(str(sspi_path.absolute()))
 
     for e in [
+        "context_attributes",
+        "credential_attributes",
         "credential",
+        "message",
         "ntstatus",
-        "query_context",
         "security_buffer",
         "security_context",
         "security_package",

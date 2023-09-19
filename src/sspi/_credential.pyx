@@ -117,10 +117,10 @@ cdef class AuthIdentity:
 
 cdef class WinNTAuthIdentity(AuthIdentity):
     cdef SEC_WINNT_AUTH_IDENTITY_EXW raw
-    cdef WideCharString username_raw
-    cdef WideCharString domain_raw
-    cdef WideCharString password_raw
-    cdef WideCharString package_list_raw
+    cdef WideCharString username_wchar
+    cdef WideCharString domain_wchar
+    cdef WideCharString password_wchar
+    cdef WideCharString package_list_wchar
 
     def __cinit__(
         WinNTAuthIdentity self,
@@ -134,23 +134,23 @@ cdef class WinNTAuthIdentity(AuthIdentity):
         self.raw.Version = SEC_WINNT_AUTH_IDENTITY_VERSION
         self.raw.Length = <unsigned long>sizeof(SEC_WINNT_AUTH_IDENTITY_EXW)
 
-        self.username_raw = WideCharString(username)
-        self.raw.User = <unsigned short*>self.username_raw.buffer
-        self.raw.UserLength = <unsigned long>self.username_raw.length
+        self.username_wchar = WideCharString(username)
+        self.raw.User = <unsigned short*>self.username_wchar.raw
+        self.raw.UserLength = <unsigned long>self.username_wchar.length
 
-        self.domain_raw = WideCharString(domain)
-        self.raw.Domain = <unsigned short*>self.domain_raw.buffer
-        self.raw.DomainLength = <unsigned long>self.domain_raw.length
+        self.domain_wchar = WideCharString(domain)
+        self.raw.Domain = <unsigned short*>self.domain_wchar.raw
+        self.raw.DomainLength = <unsigned long>self.domain_wchar.length
 
-        self.password_raw = WideCharString(password)
-        self.raw.Password = <unsigned short*>self.password_raw.buffer
-        self.raw.PasswordLength = <unsigned long>self.password_raw.length
+        self.password_wchar = WideCharString(password)
+        self.raw.Password = <unsigned short*>self.password_wchar.raw
+        self.raw.PasswordLength = <unsigned long>self.password_wchar.length
 
         self.raw.Flags = int(flags) | _SEC_WINNT_AUTH_IDENTITY_UNICODE
 
-        self.package_list_raw = WideCharString(package_list)
-        self.raw.PackageList = <unsigned short*>self.package_list_raw.buffer
-        self.raw.PackageListLength = <unsigned long>self.package_list_raw.length
+        self.package_list_wchar = WideCharString(package_list)
+        self.raw.PackageList = <unsigned short*>self.package_list_wchar.raw
+        self.raw.PackageListLength = <unsigned long>self.package_list_wchar.length
 
     cdef void *__c_value__(WinNTAuthIdentity self):
         return &self.raw
@@ -210,8 +210,8 @@ def acquire_credentials_handle(
 
     with nogil:
         res = AcquireCredentialsHandleW(
-            principal_wstr.buffer,
-            package_wstr.buffer,
+            principal_wstr.raw,
+            package_wstr.raw,
             credential_use,
             NULL,
             auth_data_buffer,

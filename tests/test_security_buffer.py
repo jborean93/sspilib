@@ -127,8 +127,8 @@ def test_sec_channel_bindings_nothing() -> None:
     assert buffer.acceptor_addr is None
     assert buffer.application_data is None
 
-    view = buffer.dangerous_get_view()
-    assert bytes(view) == b"\x00" * 32
+    data = buffer.get_sec_buffer_copy().data
+    assert data == b"\x00" * 32
 
 
 def test_sec_channel_bindings_initiator() -> None:
@@ -143,15 +143,14 @@ def test_sec_channel_bindings_initiator() -> None:
     assert buffer.acceptor_addr is None
     assert buffer.application_data is None
 
-    view = buffer.dangerous_get_view()
-    assert bytes(view) == b"".join(
+    data = buffer.get_sec_buffer_copy().data
+    assert data == b"".join(
         [
             b"\x01\x00\x00\x00\x04\x00\x00\x00\x20\x00\x00\x00",
             b"\x00" * 20,
             b"12\x003",
         ]
     )
-    assert bytes(view) == (b"\x01\x00\x00\x00\x04\x00\x00\x00\x20\x00\x00\x00" + (b"\x00" * 20) + b"12\x003")
 
 
 def test_sec_channel_bindings_acceptor() -> None:
@@ -166,8 +165,8 @@ def test_sec_channel_bindings_acceptor() -> None:
     assert buffer.acceptor_addr == b"12\x003"
     assert buffer.application_data is None
 
-    view = buffer.dangerous_get_view()
-    assert bytes(view) == b"".join(
+    data = buffer.get_sec_buffer_copy().data
+    assert data == b"".join(
         [
             b"\x00" * 12,
             b"\x01\x00\x00\x00\x04\x00\x00\x00\x20\x00\x00\x00",
@@ -189,9 +188,8 @@ def test_sec_channel_bindings_appdata() -> None:
     assert buffer.acceptor_addr is None
     assert buffer.application_data == b"12\x003"
 
-    view = buffer.dangerous_get_view()
-    view = buffer.dangerous_get_view()
-    assert bytes(view) == b"".join(
+    data = buffer.get_sec_buffer_copy().data
+    assert data == b"".join(
         [
             b"\x00" * 24,
             b"\x04\x00\x00\x00\x20\x00\x00\x0012\x003",
@@ -217,8 +215,8 @@ def test_sec_channel_bindings_all() -> None:
     assert buffer.acceptor_addr == b"2"
     assert buffer.application_data == b"3"
 
-    view = buffer.dangerous_get_view()
-    assert bytes(view) == b"".join(
+    data = buffer.get_sec_buffer_copy().data
+    assert data == b"".join(
         [
             b"\x01\x00\x00\x00\x01\x00\x00\x00\x20\x00\x00\x00",
             b"\x02\x00\x00\x00\x01\x00\x00\x00\x21\x00\x00\x00",
@@ -226,3 +224,37 @@ def test_sec_channel_bindings_all() -> None:
             b"123",
         ]
     )
+
+
+def test_sec_channel_bindings_dangerous_get_buffer() -> None:
+    channel_bindings = sspi.SecChannelBindings(application_data=b"12\x003")
+    expected = b"".join(
+        [
+            b"\x00" * 24,
+            b"\x04\x00\x00\x00\x20\x00\x00\x0012\x003",
+        ]
+    )
+
+    safe_buffer = channel_bindings.get_sec_buffer_copy()
+    unsafe_buffer = channel_bindings.dangerous_get_sec_buffer()
+
+    safe_buffer.data == expected
+    unsafe_buffer.data == expected
+
+    # Modifying the raw bytes should reflect back on the channel_bindings val
+    unsafe_buffer.dangerous_get_view()[0] = b"\x01"  # type: ignore[call-overload]
+    assert channel_bindings.initiator_addr_type == 1
+
+    # It should not affect the safe buffer created with a copy
+    assert safe_buffer.data == expected
+    assert unsafe_buffer.data == b"".join(
+        [
+            b"\x01",
+            b"\x00" * 23,
+            b"\x04\x00\x00\x00\x20\x00\x00\x0012\x003",
+        ]
+    )
+
+    # The safe buffer should still be valid beyond the life of the object
+    del channel_bindings
+    safe_buffer.data == expected
