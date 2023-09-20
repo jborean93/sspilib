@@ -3,6 +3,7 @@
 
 from __future__ import annotations
 
+import os
 import socket
 import typing as t
 
@@ -14,8 +15,28 @@ import sspi
 @pytest.fixture()
 def authenticated_contexts() -> tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext]:
     spn = f"host/{socket.gethostname()}"
-    c_cred = sspi.acquire_credentials_handle(None, "Negotiate", sspi.CredentialUse.SECPKG_CRED_OUTBOUND)
-    s_cred = sspi.acquire_credentials_handle(None, "Negotiate", sspi.CredentialUse.SECPKG_CRED_INBOUND)
+
+    # sspi-rs only supports acceptors for NTLM at this point in time. it also
+    # cannot rely on implicit creds
+    if os.name == "nt":
+        auth_data = None
+        sec_provider = "Negotiate"
+    else:
+        auth_data = sspi.WinNTAuthIdentity(username="user", password="pass")
+        sec_provider = "NTLM"
+
+    c_cred = sspi.acquire_credentials_handle(
+        None,
+        sec_provider,
+        sspi.CredentialUse.SECPKG_CRED_OUTBOUND,
+        auth_data=auth_data,
+    )
+    s_cred = sspi.acquire_credentials_handle(
+        None,
+        sec_provider,
+        sspi.CredentialUse.SECPKG_CRED_INBOUND,
+        auth_data=auth_data,
+    )
     isc_req = (
         sspi.IscReq.ISC_REQ_ALLOCATE_MEMORY
         | sspi.IscReq.ISC_REQ_CONFIDENTIALITY
@@ -79,6 +100,9 @@ def authenticated_contexts() -> tuple[sspi.InitiatorSecurityContext, sspi.Accept
             if s_output_buffers[0].count:
                 server_token = bytearray(s_output_buffers[0].data)
             elif s_status == sspi.NtStatus.SEC_E_OK:
+                break
+            elif s_status == sspi.NtStatus.SEC_I_COMPLETE_NEEDED:
+                sspi.complete_auth_token(s_ctx, s_input_buffers)
                 break
             else:
                 raise ValueError(f"Expected SEC_E_OK but got {c_status.name}")

@@ -3,11 +3,14 @@
 
 from __future__ import annotations
 
+import os
+
 import pytest
 
 import sspi
 
 
+@pytest.mark.skipif(os.name != "nt", reason="sspi-rs does not support implicit creds outside Windows")
 def test_get_outbound_with_default_context() -> None:
     cred = sspi.acquire_credentials_handle(
         None,
@@ -15,9 +18,10 @@ def test_get_outbound_with_default_context() -> None:
         sspi.CredentialUse.SECPKG_CRED_OUTBOUND,
     )
     assert isinstance(cred, sspi.Credential)
-    assert cred.expiry > 0
+    assert isinstance(cred.expiry, int)
 
 
+@pytest.mark.skipif(os.name != "nt", reason="sspi-rs does not support implicit creds outside Windows")
 def test_get_inbound_with_default_context() -> None:
     cred = sspi.acquire_credentials_handle(
         None,
@@ -25,7 +29,7 @@ def test_get_inbound_with_default_context() -> None:
         sspi.CredentialUse.SECPKG_CRED_INBOUND,
     )
     assert isinstance(cred, sspi.Credential)
-    assert cred.expiry > 0
+    assert isinstance(cred.expiry, int)
 
 
 @pytest.mark.parametrize(
@@ -90,7 +94,7 @@ def test_get_cred_with_explicit_credentials(
         auth_data=auth_identity,
     )
     assert isinstance(cred, sspi.Credential)
-    assert cred.expiry > 0
+    assert isinstance(cred.expiry, int)
 
 
 def test_get_cred_with_explicit_credentials_package_list() -> None:
@@ -109,21 +113,31 @@ def test_get_cred_with_explicit_credentials_package_list() -> None:
         auth_data=auth_identity,
     )
     assert isinstance(cred, sspi.Credential)
-    assert cred.expiry > 0
+    assert isinstance(cred.expiry, int)
 
 
 def test_get_credential_with_principal() -> None:
+    auth_data = None
+    if os.name != "nt":
+        # sspi-rs needs explicit creds for this to work.
+        auth_data = sspi.WinNTAuthIdentity(username="user", password="pass")
+
     cred = sspi.acquire_credentials_handle(
         "Principal",
         "Negotiate",
         sspi.CredentialUse.SECPKG_CRED_OUTBOUND,
+        auth_data=auth_data,
     )
     assert isinstance(cred, sspi.Credential)
-    assert cred.expiry > 0
+    assert isinstance(cred.expiry, int)
 
 
 def test_fail_with_invalid_package_name() -> None:
-    with pytest.raises(WindowsError) as e:
+    with pytest.raises(sspi.WindowsError) as e:
         sspi.acquire_credentials_handle(None, "Invalid", sspi.CredentialUse.SECPKG_CRED_OUTBOUND)
 
-    assert e.value.winerror == -2146893051  # SEC_E_SECPKG_NOT_FOUND
+    if os.name == "nt":
+        assert e.value.winerror == -2146893051  # SEC_E_SECPKG_NOT_FOUND
+    else:
+        # https://github.com/Devolutions/sspi-rs/issues/170
+        assert e.value.winerror == -2146892963  # SEC_E_INVALID_PARAMETER

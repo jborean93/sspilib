@@ -26,7 +26,7 @@ lib::setup::python_requirements() {
 
     # Getting the version is important so that pip prioritises our local dist
     python -m pip install build
-    SSPI_VERSION="$( python -c "import build.util; print(build.util.project_wheel_metadata('.').get('Version'))" )"
+    SSPI_VERSION="$( grep -m 1 version pyproject.toml | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3 )"
 
     python -m pip install sspi=="${SSPI_VERSION}" \
         --find-links "file:///${DIST_LINK_PATH}" \

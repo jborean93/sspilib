@@ -4,16 +4,16 @@
 from sspi._win32_types cimport *
 
 
-cdef extern from "Security.h":
+cdef extern from "python_sspi.h":
     cdef struct _SecBuffer:
-        unsigned long cbBuffer
-        unsigned long BufferType
+        unsigned int cbBuffer
+        unsigned int BufferType
         void *pvBuffer
     ctypedef _SecBuffer *PSecBuffer
 
     cdef struct _SecBufferDesc:
-        unsigned long ulVersion
-        unsigned long cBuffers
+        unsigned int ulVersion
+        unsigned int cBuffers
         PSecBuffer pBuffers
     ctypedef _SecBufferDesc *PSecBufferDesc
 

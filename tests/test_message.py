@@ -10,6 +10,7 @@ import pytest
 import sspi
 
 
+@pytest.mark.skipif(os.name != "nt", reason="sspi-rs does not support signature functions")
 def test_sign_and_verify(
     authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
 ) -> None:
@@ -93,6 +94,7 @@ def test_sign_and_verify(
     assert bytes(in_token) == in_message[1].data
 
 
+@pytest.mark.skipif(os.name != "nt", reason="sspi-rs does not support signature functions")
 def test_make_signature_fail(
     authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
 ) -> None:
@@ -105,7 +107,7 @@ def test_make_signature_fail(
         ],
     )
 
-    with pytest.raises(WindowsError) as e:
+    with pytest.raises(sspi.WindowsError) as e:
         sspi.make_signature(
             authenticated_contexts[0],
             0,
@@ -116,6 +118,7 @@ def test_make_signature_fail(
     assert e.value.winerror == -2146893048  # SEC_E_INVALID_TOKEN
 
 
+@pytest.mark.skipif(os.name != "nt", reason="sspi-rs does not support signature functions")
 def test_verify_failure(
     authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
 ) -> None:
@@ -140,7 +143,7 @@ def test_verify_failure(
 
     in_data[0] = 0
 
-    with pytest.raises(WindowsError) as e:
+    with pytest.raises(sspi.WindowsError) as e:
         sspi.verify_signature(
             authenticated_contexts[1],
             in_message,
@@ -249,7 +252,7 @@ def test_encrypt_message_fail(
         ],
     )
 
-    with pytest.raises(WindowsError) as e:
+    with pytest.raises(sspi.WindowsError) as e:
         sspi.encrypt_message(
             authenticated_contexts[0],
             0,
@@ -284,7 +287,7 @@ def test_decrypt_message_failure(
 
     in_data[0] = 0 if in_data[0] == 255 else in_data[0] + 1
 
-    with pytest.raises(WindowsError) as e:
+    with pytest.raises(sspi.WindowsError) as e:
         sspi.decrypt_message(
             authenticated_contexts[1],
             in_message,
@@ -294,6 +297,8 @@ def test_decrypt_message_failure(
     assert e.value.winerror == -2146893041  # SEC_E_MESSAGE_ALTERED
 
 
+# https://github.com/Devolutions/sspi-rs/issues/84
+@pytest.mark.skipif(os.name != "nt", reason="SECBUFFER_STREAM not support with NTLM in sspi-rs")
 def test_encrypt_and_decrypt_stream(
     authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
 ) -> None:
@@ -478,6 +483,8 @@ def test_encrypt_winrm(
     assert bytes(in_data) == in_message[1].data
 
 
+# https://github.com/Devolutions/sspi-rs/issues/120
+@pytest.mark.skipif(os.name != "nt", reason="No READONLY buffer support in sspi-rs")
 @pytest.mark.parametrize(
     ["sign_header"],
     [

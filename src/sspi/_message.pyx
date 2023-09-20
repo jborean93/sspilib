@@ -5,50 +5,47 @@ from __future__ import annotations
 
 import enum
 
-from cpython.exc cimport PyErr_SetFromWindowsErr
-
 from sspi._security_buffer cimport PSecBufferDesc, SecBufferDesc
 from sspi._security_context cimport SecurityContext
 from sspi._win32_types cimport *
 
 
-cdef extern from "NTSecAPI.h":
-    unsigned long _KERB_WRAP_NO_ENCRYPT "KERB_WRAP_NO_ENCRYPT"
+cdef extern from "python_sspi.h":
+    unsigned int _KERB_WRAP_NO_ENCRYPT "KERB_WRAP_NO_ENCRYPT"
 
-cdef extern from "Security.h":
-    unsigned long _SECQOP_WRAP_NO_ENCRYPT "SECQOP_WRAP_NO_ENCRYPT"
-    unsigned long _SECQOP_WRAP_OOB_DATA "SECQOP_WRAP_OOB_DATA"
+    unsigned int _SECQOP_WRAP_NO_ENCRYPT "SECQOP_WRAP_NO_ENCRYPT"
+    unsigned int _SECQOP_WRAP_OOB_DATA "SECQOP_WRAP_OOB_DATA"
 
     # https://learn.microsoft.com/en-us/windows/win32/secauthn/decryptmessage--general
     SECURITY_STATUS DecryptMessage(
         PCtxtHandle    phContext,
         PSecBufferDesc pMessage,
-        unsigned long  MessageSeqNo,
-        unsigned long  *pfQOP
+        unsigned int  MessageSeqNo,
+        unsigned int  *pfQOP
     ) nogil
 
     # https://learn.microsoft.com/en-us/windows/win32/secauthn/encryptmessage--general
     SECURITY_STATUS EncryptMessage(
         PCtxtHandle    phContext,
-        unsigned long  fQOP,
+        unsigned int  fQOP,
         PSecBufferDesc pMessage,
-        unsigned long  MessageSeqNo
+        unsigned int  MessageSeqNo
     ) nogil
 
     # https://learn.microsoft.com/en-us/windows/win32/api/sspi/nf-sspi-makesignature
     SECURITY_STATUS MakeSignature(
         PCtxtHandle    phContext,
-        unsigned long  fQOP,
+        unsigned int  fQOP,
         PSecBufferDesc pMessage,
-        unsigned long  MessageSeqNo
+        unsigned int  MessageSeqNo
     ) nogil
 
     # https://learn.microsoft.com/en-us/windows/win32/api/sspi/nf-sspi-verifysignature
     SECURITY_STATUS VerifySignature(
         PCtxtHandle    phContext,
         PSecBufferDesc pMessage,
-        unsigned long  MessageSeqNo,
-        unsigned long  *pfQOP
+        unsigned int  MessageSeqNo,
+        unsigned int  *pfQOP
     ) nogil
 
 
@@ -60,9 +57,9 @@ class QopFlags(enum.IntFlag):
 def decrypt_message(
     SecurityContext context not None,
     SecBufferDesc message not None,
-    unsigned long seq_no,
+    unsigned int seq_no,
 ) -> int:
-    cdef unsigned long qop = 0
+    cdef unsigned int qop = 0
     with nogil:
         res = DecryptMessage(
             &context.raw,
@@ -80,9 +77,9 @@ def decrypt_message(
 
 def encrypt_message(
     SecurityContext context not None,
-    unsigned long qop,
+    unsigned int qop,
     SecBufferDesc message not None,
-    unsigned long seq_no,
+    unsigned int seq_no,
 ) -> None:
     with nogil:
         res = EncryptMessage(
@@ -99,9 +96,9 @@ def encrypt_message(
 
 def make_signature(
     SecurityContext context not None,
-    unsigned long qop,
+    unsigned int qop,
     SecBufferDesc message not None,
-    unsigned long seq_no,
+    unsigned int seq_no,
 ) -> None:
     with nogil:
         res = MakeSignature(
@@ -119,9 +116,9 @@ def make_signature(
 def verify_signature(
     SecurityContext context not None,
     SecBufferDesc message not None,
-    unsigned long seq_no,
+    unsigned int seq_no,
 ) -> int:
-    cdef unsigned long qop = 0
+    cdef unsigned int qop = 0
     with nogil:
         res = VerifySignature(
             &context.raw,

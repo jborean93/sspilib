@@ -6,8 +6,6 @@ from __future__ import annotations
 import collections
 import enum
 
-from cpython.exc cimport PyErr_SetFromWindowsErr
-
 from sspi._security_buffer cimport FreeContextBuffer
 from sspi._security_context cimport SecurityContext
 from sspi._security_package cimport PSecPkgInfoW
@@ -18,44 +16,44 @@ from sspi._ntstatus import NtStatus
 from sspi._security_package import SecurityPackageCapability
 
 
-cdef extern from "Security.h":
-    unsigned long SECPKG_ATTR_SIZES
-    unsigned long SECPKG_ATTR_NAMES
-    unsigned long SECPKG_ATTR_LIFESPAN
-    unsigned long SECPKG_ATTR_DCE_INFO
-    unsigned long SECPKG_ATTR_STREAM_SIZES
-    unsigned long SECPKG_ATTR_KEY_INFO
-    unsigned long SECPKG_ATTR_AUTHORITY
-    unsigned long SECPKG_ATTR_PROTO_INFO
-    unsigned long SECPKG_ATTR_PASSWORD_EXPIRY
-    unsigned long SECPKG_ATTR_SESSION_KEY
-    unsigned long SECPKG_ATTR_PACKAGE_INFO
-    unsigned long SECPKG_ATTR_USER_FLAGS
-    unsigned long SECPKG_ATTR_NEGOTIATION_INFO
-    unsigned long SECPKG_ATTR_NATIVE_NAMES
-    unsigned long SECPKG_ATTR_FLAGS
-    unsigned long SECPKG_ATTR_USE_VALIDATED
-    unsigned long SECPKG_ATTR_CREDENTIAL_NAME
-    unsigned long SECPKG_ATTR_TARGET_INFORMATION
-    unsigned long SECPKG_ATTR_ACCESS_TOKEN
-    unsigned long SECPKG_ATTR_TARGET
-    unsigned long SECPKG_ATTR_AUTHENTICATION_ID
-    unsigned long SECPKG_ATTR_LOGOFF_TIME
-    unsigned long SECPKG_ATTR_NEGO_KEYS
-    unsigned long SECPKG_ATTR_PROMPTING_NEEDED
-    unsigned long SECPKG_ATTR_UNIQUE_BINDINGS
-    unsigned long SECPKG_ATTR_ENDPOINT_BINDINGS
-    unsigned long SECPKG_ATTR_CLIENT_SPECIFIED_TARGET
-    unsigned long SECPKG_ATTR_LAST_CLIENT_TOKEN_STATUS
-    unsigned long SECPKG_ATTR_NEGO_PKG_INFO
-    unsigned long SECPKG_ATTR_NEGO_STATUS
-    unsigned long SECPKG_ATTR_CONTEXT_DELETED
-    unsigned long SECPKG_ATTR_DTLS_MTU
-    unsigned long SECPKG_ATTR_DATAGRAM_SIZES
-    unsigned long SECPKG_ATTR_SUBJECT_SECURITY_ATTRIBUTES
-    unsigned long SECPKG_ATTR_APPLICATION_PROTOCOL
-    unsigned long SECPKG_ATTR_NEGOTIATED_TLS_EXTENSIONS
-    unsigned long SECPKG_ATTR_IS_LOOPBACK
+cdef extern from "python_sspi.h":
+    unsigned int SECPKG_ATTR_SIZES
+    unsigned int SECPKG_ATTR_NAMES
+    unsigned int SECPKG_ATTR_LIFESPAN
+    unsigned int SECPKG_ATTR_DCE_INFO
+    unsigned int SECPKG_ATTR_STREAM_SIZES
+    unsigned int SECPKG_ATTR_KEY_INFO
+    unsigned int SECPKG_ATTR_AUTHORITY
+    unsigned int SECPKG_ATTR_PROTO_INFO
+    unsigned int SECPKG_ATTR_PASSWORD_EXPIRY
+    unsigned int SECPKG_ATTR_SESSION_KEY
+    unsigned int SECPKG_ATTR_PACKAGE_INFO
+    unsigned int SECPKG_ATTR_USER_FLAGS
+    unsigned int SECPKG_ATTR_NEGOTIATION_INFO
+    unsigned int SECPKG_ATTR_NATIVE_NAMES
+    unsigned int SECPKG_ATTR_FLAGS
+    unsigned int SECPKG_ATTR_USE_VALIDATED
+    unsigned int SECPKG_ATTR_CREDENTIAL_NAME
+    unsigned int SECPKG_ATTR_TARGET_INFORMATION
+    unsigned int SECPKG_ATTR_ACCESS_TOKEN
+    unsigned int SECPKG_ATTR_TARGET
+    unsigned int SECPKG_ATTR_AUTHENTICATION_ID
+    unsigned int SECPKG_ATTR_LOGOFF_TIME
+    unsigned int SECPKG_ATTR_NEGO_KEYS
+    unsigned int SECPKG_ATTR_PROMPTING_NEEDED
+    unsigned int SECPKG_ATTR_UNIQUE_BINDINGS
+    unsigned int SECPKG_ATTR_ENDPOINT_BINDINGS
+    unsigned int SECPKG_ATTR_CLIENT_SPECIFIED_TARGET
+    unsigned int SECPKG_ATTR_LAST_CLIENT_TOKEN_STATUS
+    unsigned int SECPKG_ATTR_NEGO_PKG_INFO
+    unsigned int SECPKG_ATTR_NEGO_STATUS
+    unsigned int SECPKG_ATTR_CONTEXT_DELETED
+    unsigned int SECPKG_ATTR_DTLS_MTU
+    unsigned int SECPKG_ATTR_DATAGRAM_SIZES
+    unsigned int SECPKG_ATTR_SUBJECT_SECURITY_ATTRIBUTES
+    unsigned int SECPKG_ATTR_APPLICATION_PROTOCOL
+    unsigned int SECPKG_ATTR_NEGOTIATED_TLS_EXTENSIONS
+    unsigned int SECPKG_ATTR_IS_LOOPBACK
 
     cdef struct _SecPkgContext_NamesW:
         LPWSTR sUserName
@@ -68,15 +66,15 @@ cdef extern from "Security.h":
     ctypedef SecPkgContext_PackageInfoW *PSecPkgContext_PackageInfoW
 
     cdef struct _SecPkgContext_Sizes:
-        unsigned long cbMaxToken
-        unsigned long cbMaxSignature
-        unsigned long cbBlockSize
-        unsigned long cbSecurityTrailer
+        unsigned int cbMaxToken
+        unsigned int cbMaxSignature
+        unsigned int cbBlockSize
+        unsigned int cbSecurityTrailer
     ctypedef _SecPkgContext_Sizes SecPkgContext_Sizes
     ctypedef SecPkgContext_Sizes *PSecPkgContext_Sizes
 
     cdef struct _SecPkgContext_SessionKey:
-        unsigned long SessionKeyLength
+        unsigned int SessionKeyLength
         unsigned char *SessionKey
     ctypedef _SecPkgContext_SessionKey SecPkgContext_SessionKey
     ctypedef SecPkgContext_SessionKey *PSecPkgContext_SessionKey
@@ -84,13 +82,13 @@ cdef extern from "Security.h":
     # https://learn.microsoft.com/en-us/windows/win32/api/sspi/nf-sspi-querycontextattributesw
     SECURITY_STATUS QueryContextAttributesW(
         PCtxtHandle   phContext,
-        unsigned long ulAttribute,
+        unsigned int ulAttribute,
         void          *pBuffer
     ) nogil
 
 cdef class SecPkgContext:
 
-    cdef (unsigned long, void *) __c_value__(SecPkgContext self):
+    cdef (unsigned int, void *) __c_value__(SecPkgContext self):
         return (0, NULL)
 
 cdef class SecPkgContextNames(SecPkgContext):
@@ -101,7 +99,7 @@ cdef class SecPkgContextNames(SecPkgContext):
             FreeContextBuffer(self.raw.sUserName)
             self.raw.sUserName = NULL
 
-    cdef (unsigned long, void *) __c_value__(SecPkgContextNames self):
+    cdef (unsigned int, void *) __c_value__(SecPkgContextNames self):
         return (SECPKG_ATTR_NAMES, &self.raw)
 
     def __repr__(SecPkgContextNames self):
@@ -122,7 +120,7 @@ cdef class SecPkgContextPackageInfo(SecPkgContext):
             FreeContextBuffer(self.raw.PackageInfo)
             self.raw.PackageInfo = NULL
 
-    cdef (unsigned long, void *) __c_value__(SecPkgContextPackageInfo self):
+    cdef (unsigned int, void *) __c_value__(SecPkgContextPackageInfo self):
         return (SECPKG_ATTR_PACKAGE_INFO, &self.raw)
 
     def __repr__(SecPkgContextPackageInfo self):
@@ -170,7 +168,7 @@ cdef class SecPkgContextSessionKey(SecPkgContext):
             self.raw.SessionKeyLength = 0
             self.raw.SessionKey = NULL
 
-    cdef (unsigned long, void *) __c_value__(SecPkgContextSessionKey self):
+    cdef (unsigned int, void *) __c_value__(SecPkgContextSessionKey self):
         return (SECPKG_ATTR_SESSION_KEY, &self.raw)
 
     def __repr__(SecPkgContextSessionKey self):
@@ -186,7 +184,7 @@ cdef class SecPkgContextSessionKey(SecPkgContext):
 cdef class SecPkgContextSizes(SecPkgContext):
     cdef SecPkgContext_Sizes raw
 
-    cdef (unsigned long, void *) __c_value__(SecPkgContextSizes self):
+    cdef (unsigned int, void *) __c_value__(SecPkgContextSizes self):
         return (SECPKG_ATTR_SIZES, &self.raw)
 
     def __repr__(SecPkgContextSizes self) -> str:
@@ -223,7 +221,7 @@ def query_context_attributes(
         raise TypeError("attribute must be a type of SecPkgContext")
 
     cdef SecPkgContext value = attribute()
-    cdef (unsigned long, void*) raw = value.__c_value__()
+    cdef (unsigned int, void*) raw = value.__c_value__()
 
     with nogil:
         res = QueryContextAttributesW(

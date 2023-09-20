@@ -1,19 +1,49 @@
 # Copyright: (c) 2023, Jordan Borean (@jborean93) <jborean93@gmail.com>
 # MIT License (see LICENSE or https://opensource.org/licenses/MIT)
 
-from libc.stddef cimport size_t, wchar_t
+from cpython.exc cimport PyErr_SetFromWindowsErr
+from libc.stddef cimport size_t
 
 
-cdef extern from "Windows.h":
+cdef extern from "python_sspi.h":
+    # PyErr_SetFromWindowsErr is Windows only, need a shim for Linux
+    """
+    #if defined(PYSSPI_IS_LINUX)
+    PyObject *WinError;
+
+    PyObject *PyErr_SetFromWindowsErr(int ierr)
+    {
+        if (WinError == NULL)
+        {
+            PyObject *winerror = PyImport_ImportModule("sspi._winerror");
+            if (winerror == NULL)
+            {
+                PyErr_SetString(PyExc_RuntimeError, "Failed to import custom WindowsError.");
+                return NULL;
+            }
+            else
+            {
+                WinError = PyObject_GetAttrString(winerror, "WindowsError");
+                Py_XDECREF(winerror);
+            }
+        }
+
+        PyObject * err_obj = PyLong_FromLong(ierr);
+        PyErr_SetObject(WinError, err_obj);
+        return NULL;
+    }
+    #endif
+    """
+
     ctypedef void *PVOID;
 
     ctypedef unsigned short USHORT
 
-    ctypedef long LONG
-    ctypedef unsigned long ULONG
+    ctypedef int LONG
+    ctypedef unsigned int ULONG
     ctypedef LONG SECURITY_STATUS
 
-    ctypedef wchar_t WCHAR
+    ctypedef unsigned short WCHAR
     ctypedef WCHAR *LPWSTR
     ctypedef WCHAR SEC_WCHAR;
 
@@ -32,8 +62,8 @@ cdef extern from "Windows.h":
     ctypedef PSecHandle PCtxtHandle
 
     cdef struct _SECURITY_INTEGER:
-        unsigned long LowPart
-        long          HighPart
+        unsigned int LowPart
+        int          HighPart
     ctypedef _SECURITY_INTEGER SECURITY_INTEGER
     ctypedef SECURITY_INTEGER *PSECURITY_INTEGER
     ctypedef SECURITY_INTEGER TimeStamp
