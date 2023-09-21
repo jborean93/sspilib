@@ -8,9 +8,9 @@ import enum
 from cpython.unicode cimport PyUnicode_GET_LENGTH
 from libc.stdlib cimport free, malloc
 
-from sspi._credential cimport Credential
-from sspi._text cimport WideCharString, wide_char_to_str
-from sspi._win32_types cimport *
+from ._credential cimport CredHandle
+from ._text cimport WideCharString, wide_char_to_str
+from ._win32_types cimport *
 
 
 cdef extern from "python_sspi.h":
@@ -130,7 +130,7 @@ cdef class SecPkgCredKdcProxySettings(SecPkgCred):
         return wide_char_to_str(raw, size)
 
 def set_credentials_attributes(
-    Credential credential not None,
+    CredHandle credential not None,
     SecPkgCred attribute not None,
 ) -> None:
     cdef (unsigned int, void*, unsigned int) raw = attribute.__c_value__()

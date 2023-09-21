@@ -6,7 +6,7 @@ from __future__ import annotations
 import enum
 import typing as t
 
-from ._credential import Credential
+from ._credential import CredHandle
 from ._ntstatus import NtStatus
 from ._security_buffer import SecBufferDesc
 
@@ -242,60 +242,60 @@ class IscRet(enum.IntFlag):
     ISC_RET_REAUTHENTICATION = ...
     ISC_RET_CONFIDENTIALITY_ONLY = ...
 
-class SecurityContext:
-    """A security context."""
+class CtxtHandle:
+    """A security context.
 
-    @property
-    def expiry(self) -> int:
-        """The time at which the context expires as a FILETIME value."""
-
-class AcceptorSecurityContext(SecurityContext):
-    @property
-    def context_attr(self) -> AscRet:
-        """
-        A set of flags that indicate the attributes of the established context.
-        Security-related attributes should only be checked until the SEC_E_OK
-        result has been received. Non-security related attributes can be
-        checked before the context is fully established.
-        """
-
-class InitiatorSecurityContext(SecurityContext):
-    @property
-    def context_attr(self) -> IscRet:
-        """
-        A set of flags that indicate the attributes of the established context.
-        Security-related attributes should only be checked until the SEC_E_OK
-        result has been received. Non-security related attributes can be
-        checked before the context is fully established.
-        """
+    This contains the security context handle that was setup with either
+    :meth:`accept_security_context` or :meth:`initialize_security_context`.
+    Once no longer referenced, the handle will be freed internally, closing
+    the security context.
+    """
 
 class AcceptContextResult(t.NamedTuple):
     """The accept security context result."""
 
-    context: AcceptorSecurityContext
+    context: CtxtHandle
     """
     The generated context to use for subsequent operations on this context.
     This context should be passed as the `context` arg on any remaining calls
     to :meth:`accept_security_context`.
     """
-    result: NtStatus
+    attributes: AscRet
+    """
+    A set of flags that indicate the attributes of the established context.
+    Security-related attributes should only be checked until the status
+    ``SEC_E_OK`` has been received. Non-security related attributes can be
+    checked before the context is fully established.
+    """
+    expiry: int
+    """The time at which the context expires as a FILETIME value."""
+    status: NtStatus
     """The NtStatus code result of the operation."""
 
 class InitializeContextResult(t.NamedTuple):
     """The initialize security context result."""
 
-    context: InitiatorSecurityContext
+    context: CtxtHandle
     """
     The generated context to use for subsequent operations on this context.
     This context should be passed as the `context` arg on any remaining calls
     to :meth:`initialize_security_context`.
     """
-    result: NtStatus
+    attributes: IscRet
+    """
+    A set of flags that indicate the attributes of the established context.
+    Security-related attributes should only be checked until the status
+    ``SEC_E_OK`` has been received. Non-security related attributes can be
+    checked before the context is fully established.
+    """
+    expiry: int
+    """The time at which the context expires as a FILETIME value."""
+    status: NtStatus
     """The NtStatus code result of the operation."""
 
 def accept_security_context(
-    credential: Credential | None,
-    context: AcceptorSecurityContext | None,
+    credential: CredHandle | None,
+    context: CtxtHandle | None,
     input_buffers: SecBufferDesc | None,
     context_req: AscReq | int,
     target_data_rep: TargetDataRep | int,
@@ -360,8 +360,8 @@ def accept_security_context(
             security package.
 
     Returns:
-        InitializeContextResult: Contains the security context and NtStatus
-        result from the call.
+        AcceptorContextResult: Contains the security context, attributes,
+        expiry, and NtStatus result from the call.
 
     Raises:
         WindowsError: If the function failed.
@@ -371,7 +371,7 @@ def accept_security_context(
     """
 
 def complete_auth_token(
-    context: SecurityContext,
+    context: CtxtHandle,
     token: SecBufferDesc,
 ) -> None:
     """Completes an authentication token.
@@ -397,8 +397,8 @@ def complete_auth_token(
     """
 
 def initialize_security_context(
-    credential: Credential | None,
-    context: InitiatorSecurityContext | None,
+    credential: CredHandle | None,
+    context: CtxtHandle | None,
     target_name: str,
     context_req: IscReq | int,
     target_data_rep: TargetDataRep | int,
@@ -471,8 +471,8 @@ def initialize_security_context(
             security package.
 
     Returns:
-        InitializeContextResult: Contains the security context and NtStatus
-        result from the call.
+        InitializeContextResult: Contains the security context, attributes,
+        expiry, and NtStatus result from the call.
 
     Raises:
         WindowsError: If the function failed.

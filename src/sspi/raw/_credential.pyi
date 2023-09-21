@@ -4,9 +4,10 @@
 from __future__ import annotations
 
 import enum
+import typing as t
 
 class CredentialUse(enum.IntFlag):
-    """Credential Usage Flags for :meth:`acquire_credentials_handle`."""
+    """CredHandle Usage Flags for :meth:`acquire_credentials_handle`."""
 
     SECPKG_CRED_INBOUND = ...
     """Validate an incoming server credential."""
@@ -18,7 +19,7 @@ class CredentialUse(enum.IntFlag):
     """Validate an incoming credential or use a local credential to prepare an outgoing token."""
 
     SECPKG_CRED_AUTOLOGON_RESTRICTED = ...
-    """Do not use the default logon credentials or credentials from Credential Manager"""
+    """Do not use the default logon credentials or credentials from CredHandle Manager"""
 
     SECPKG_CRED_PROCESS_POLICY_ONLY = ...
     """Process server policy."""
@@ -41,12 +42,13 @@ class WinNTAuthFlags(enum.IntFlag):
     SEC_WINNT_AUTH_IDENTITY_FLAGS_NULL_DOMAIN = ...
     SEC_WINNT_AUTH_IDENTITY_FLAGS_ID_PROVIDER = ...
 
-class Credential:
-    """Credential object returned by :meth:`acquire_credentials_handle`."""
+class CredHandle:
+    """A credential handle.
 
-    @property
-    def expiry(self) -> int:
-        """The time at which the credential expire as a FILETIME value."""
+    This contains the credential handle that was created with
+    :meth:`acquire_credentials_handle`. Once no longer referenced, the handle
+    will be freed internally, closing the credential handle.
+    """
 
 class AuthIdentity:
     """Base class for :meth:`acquire_credentials_handle` auth_data."""
@@ -106,13 +108,25 @@ class WinNTAuthIdentity(AuthIdentity):
     def package_list(self) -> str | None:
         """A comma-separated list of security packages that are available to the Negotiate provider."""
 
+class AcquireCredentialsResult(t.NamedTuple):
+    """The acquire credentials handle result."""
+
+    credential: CredHandle
+    """
+    The generated context to use for subsequent operations on this context.
+    This context should be passed as the `context` arg on any remaining calls
+    to :meth:`accept_security_context`.
+    """
+    expiry: int
+    """The time at which the credential expires as a FILETIME value."""
+
 def acquire_credentials_handle(
     principal: str | None,
     package: str,
     credential_use: CredentialUse | int,
     *,
     auth_data: AuthIdentity | None = None,
-) -> Credential:
+) -> AcquireCredentialsResult:
     """Acquires a handle to a credential.
 
     This function can be used to acquire a handle to a preexisting credential
@@ -135,7 +149,7 @@ def acquire_credentials_handle(
         auth_data: Optional package specific authentication data.
 
     Returns:
-        Credential: The acquired credential object.
+        AcquireCredentialsResult: The acquired credential object and expiry.
 
     Raises:
         WindowsError: If the function failed.
@@ -143,3 +157,9 @@ def acquire_credentials_handle(
     .. _AcquireCredentialsHandle:
         https://learn.microsoft.com/en-us/windows/win32/secauthn/acquirecredentialshandle--general
     """
+
+def _replace_cred_handle(
+    src: CredHandle,
+    dst: CredHandle,
+) -> None:
+    """Internal use only."""

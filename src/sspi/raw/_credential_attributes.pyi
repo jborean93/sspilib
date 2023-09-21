@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import enum
 
-from ._credential import Credential
+from ._credential import CredHandle
 
 class KdcProxySettingsFlags(enum.IntEnum):
     """Flags used for :class:`SecPkgCredKdcProxySettings`"""
@@ -52,7 +52,7 @@ class SecPkgCredKdcProxySettings(SecPkgCred):
         """The proxy server value."""
 
 def set_credentials_attributes(
-    context: Credential,
+    context: CredHandle,
     attribute: SecPkgCred,
 ) -> None:
     """Sets the attributes of a credential.

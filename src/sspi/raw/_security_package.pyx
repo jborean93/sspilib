@@ -6,9 +6,9 @@ from __future__ import annotations
 import dataclasses
 import enum
 
-from sspi._security_buffer cimport FreeContextBuffer
-from sspi._text cimport WideCharString, wide_char_to_str
-from sspi._win32_types cimport *
+from ._security_buffer cimport FreeContextBuffer
+from ._text cimport WideCharString, wide_char_to_str
+from ._win32_types cimport *
 
 
 cdef extern from "python_sspi.h":

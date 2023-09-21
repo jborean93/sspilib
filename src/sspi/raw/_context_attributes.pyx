@@ -6,14 +6,14 @@ from __future__ import annotations
 import collections
 import enum
 
-from sspi._security_buffer cimport FreeContextBuffer
-from sspi._security_context cimport SecurityContext
-from sspi._security_package cimport PSecPkgInfoW
-from sspi._text cimport wide_char_to_str
-from sspi._win32_types cimport *
+from ._security_buffer cimport FreeContextBuffer
+from ._security_context cimport CtxtHandle
+from ._security_package cimport PSecPkgInfoW
+from ._text cimport wide_char_to_str
+from ._win32_types cimport *
 
-from sspi._ntstatus import NtStatus
-from sspi._security_package import SecurityPackageCapability
+from ._ntstatus import NtStatus
+from ._security_package import SecurityPackageCapability
 
 
 cdef extern from "python_sspi.h":
@@ -214,7 +214,7 @@ cdef class SecPkgContextSizes(SecPkgContext):
         return self.raw.cbSecurityTrailer
 
 def query_context_attributes(
-    SecurityContext context not None,
+    CtxtHandle context not None,
     type attribute not None,
 ) -> SecPkgContext:
     if not issubclass(attribute, SecPkgContext):

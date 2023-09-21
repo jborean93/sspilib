@@ -37,10 +37,11 @@ include-package-data = true
 where = ["src"]
 
 [tool.setuptools.package-data]
-sspi = ["py.typed", "*.pyi"]
+sspi = ["py.typed"]
+"sspi.raw" = ["*.pyi"]
 
 [tool.setuptools.exclude-package-data]
-sspi = ["*.h", "*.pxd", "*.pyx"]
+"sspi.raw" = ["*.h", "*.pxd", "*.pyx"]
 
 [tool.black]
 line-length = 120

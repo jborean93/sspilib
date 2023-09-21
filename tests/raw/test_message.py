@@ -7,27 +7,27 @@ import os
 
 import pytest
 
-import sspi
+import sspi.raw as sr
 
 
 @pytest.mark.skipif(os.name != "nt", reason="sspi-rs does not support signature functions")
 def test_sign_and_verify(
-    authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
+    authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
     client_data = os.urandom(32)
     server_data = os.urandom(32)
 
-    sizes = sspi.query_context_attributes(authenticated_contexts[0], sspi.SecPkgContextSizes)
+    sizes = sr.query_context_attributes(authenticated_contexts[0], sr.SecPkgContextSizes)
 
     in_data = bytearray(client_data)
     in_token = bytearray(sizes.security_trailer)
-    in_message = sspi.SecBufferDesc(
+    in_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(in_data, sspi.SecBufferType.SECBUFFER_DATA),
-            sspi.SecBuffer(in_token, sspi.SecBufferType.SECBUFFER_TOKEN),
+            sr.SecBuffer(in_data, sr.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(in_token, sr.SecBufferType.SECBUFFER_TOKEN),
         ],
     )
-    sspi.make_signature(
+    sr.make_signature(
         authenticated_contexts[0],
         0,
         in_message,
@@ -42,7 +42,7 @@ def test_sign_and_verify(
     assert len(in_message[1].data) == in_message[1].count
     assert bytes(in_token) == in_message[1].data
 
-    res = sspi.verify_signature(
+    res = sr.verify_signature(
         authenticated_contexts[1],
         in_message,
         0,
@@ -58,15 +58,15 @@ def test_sign_and_verify(
 
     in_token = bytearray(sizes.security_trailer)
     in_data = bytearray(server_data)
-    in_message = sspi.SecBufferDesc(
+    in_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(in_data, sspi.SecBufferType.SECBUFFER_DATA),
-            sspi.SecBuffer(in_token, sspi.SecBufferType.SECBUFFER_TOKEN),
+            sr.SecBuffer(in_data, sr.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(in_token, sr.SecBufferType.SECBUFFER_TOKEN),
         ],
     )
-    sspi.make_signature(
+    sr.make_signature(
         authenticated_contexts[1],
-        sspi.QopFlags(0),
+        sr.QopFlags(0),
         in_message,
         0,
     )
@@ -79,7 +79,7 @@ def test_sign_and_verify(
     assert len(in_message[1].data) == in_message[1].count
     assert bytes(in_token) == in_message[1].data
 
-    res = sspi.verify_signature(
+    res = sr.verify_signature(
         authenticated_contexts[0],
         in_message,
         0,
@@ -96,19 +96,19 @@ def test_sign_and_verify(
 
 @pytest.mark.skipif(os.name != "nt", reason="sspi-rs does not support signature functions")
 def test_make_signature_fail(
-    authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
+    authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
     data = b"message"
 
     in_data = bytearray(data)
-    in_message = sspi.SecBufferDesc(
+    in_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(in_data, sspi.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(in_data, sr.SecBufferType.SECBUFFER_DATA),
         ],
     )
 
-    with pytest.raises(sspi.WindowsError) as e:
-        sspi.make_signature(
+    with pytest.raises(sr.WindowsError) as e:
+        sr.make_signature(
             authenticated_contexts[0],
             0,
             in_message,
@@ -120,21 +120,21 @@ def test_make_signature_fail(
 
 @pytest.mark.skipif(os.name != "nt", reason="sspi-rs does not support signature functions")
 def test_verify_failure(
-    authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
+    authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
     data = b"message"
 
-    sizes = sspi.query_context_attributes(authenticated_contexts[0], sspi.SecPkgContextSizes)
+    sizes = sr.query_context_attributes(authenticated_contexts[0], sr.SecPkgContextSizes)
 
     in_data = bytearray(data)
     in_token = bytearray(sizes.security_trailer)
-    in_message = sspi.SecBufferDesc(
+    in_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(in_data, sspi.SecBufferType.SECBUFFER_DATA),
-            sspi.SecBuffer(in_token, sspi.SecBufferType.SECBUFFER_TOKEN),
+            sr.SecBuffer(in_data, sr.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(in_token, sr.SecBufferType.SECBUFFER_TOKEN),
         ],
     )
-    sspi.make_signature(
+    sr.make_signature(
         authenticated_contexts[0],
         0,
         in_message,
@@ -143,8 +143,8 @@ def test_verify_failure(
 
     in_data[0] = 0
 
-    with pytest.raises(sspi.WindowsError) as e:
-        sspi.verify_signature(
+    with pytest.raises(sr.WindowsError) as e:
+        sr.verify_signature(
             authenticated_contexts[1],
             in_message,
             0,
@@ -154,26 +154,26 @@ def test_verify_failure(
 
 
 def test_encrypt_and_decrypt(
-    authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
+    authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
     client_data = os.urandom(32)
     server_data = os.urandom(32)
 
-    sizes = sspi.query_context_attributes(authenticated_contexts[0], sspi.SecPkgContextSizes)
+    sizes = sr.query_context_attributes(authenticated_contexts[0], sr.SecPkgContextSizes)
 
     in_token = bytearray(sizes.security_trailer)
     in_data = bytearray(client_data)
     in_padding = bytearray(sizes.block_size)
-    in_message = sspi.SecBufferDesc(
+    in_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(in_token, sspi.SecBufferType.SECBUFFER_TOKEN),
-            sspi.SecBuffer(in_data, sspi.SecBufferType.SECBUFFER_DATA),
-            sspi.SecBuffer(in_padding, sspi.SecBufferType.SECBUFFER_PADDING),
+            sr.SecBuffer(in_token, sr.SecBufferType.SECBUFFER_TOKEN),
+            sr.SecBuffer(in_data, sr.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(in_padding, sr.SecBufferType.SECBUFFER_PADDING),
         ],
     )
-    sspi.encrypt_message(
+    sr.encrypt_message(
         authenticated_contexts[0],
-        sspi.QopFlags(0),
+        sr.QopFlags(0),
         in_message,
         0,
     )
@@ -186,7 +186,7 @@ def test_encrypt_and_decrypt(
     assert len(in_message[1].data) == in_message[1].count
     assert bytes(in_data) == in_message[1].data
 
-    res = sspi.decrypt_message(
+    res = sr.decrypt_message(
         authenticated_contexts[1],
         in_message,
         0,
@@ -203,16 +203,16 @@ def test_encrypt_and_decrypt(
     in_token = bytearray(sizes.security_trailer)
     in_data = bytearray(server_data)
     in_padding = bytearray(sizes.block_size)
-    in_message = sspi.SecBufferDesc(
+    in_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(in_token, sspi.SecBufferType.SECBUFFER_TOKEN),
-            sspi.SecBuffer(in_data, sspi.SecBufferType.SECBUFFER_DATA),
-            sspi.SecBuffer(in_padding, sspi.SecBufferType.SECBUFFER_PADDING),
+            sr.SecBuffer(in_token, sr.SecBufferType.SECBUFFER_TOKEN),
+            sr.SecBuffer(in_data, sr.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(in_padding, sr.SecBufferType.SECBUFFER_PADDING),
         ],
     )
-    sspi.encrypt_message(
+    sr.encrypt_message(
         authenticated_contexts[1],
-        sspi.QopFlags(0),
+        sr.QopFlags(0),
         in_message,
         0,
     )
@@ -225,7 +225,7 @@ def test_encrypt_and_decrypt(
     assert len(in_message[1].data) == in_message[1].count
     assert bytes(in_data) == in_message[1].data
 
-    res = sspi.decrypt_message(
+    res = sr.decrypt_message(
         authenticated_contexts[0],
         in_message,
         0,
@@ -241,19 +241,19 @@ def test_encrypt_and_decrypt(
 
 
 def test_encrypt_message_fail(
-    authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
+    authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
     data = b"message"
 
     in_data = bytearray(data)
-    in_message = sspi.SecBufferDesc(
+    in_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(in_data, sspi.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(in_data, sr.SecBufferType.SECBUFFER_DATA),
         ],
     )
 
-    with pytest.raises(sspi.WindowsError) as e:
-        sspi.encrypt_message(
+    with pytest.raises(sr.WindowsError) as e:
+        sr.encrypt_message(
             authenticated_contexts[0],
             0,
             in_message,
@@ -264,21 +264,21 @@ def test_encrypt_message_fail(
 
 
 def test_decrypt_message_failure(
-    authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
+    authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
     data = b"message"
 
-    sizes = sspi.query_context_attributes(authenticated_contexts[0], sspi.SecPkgContextSizes)
+    sizes = sr.query_context_attributes(authenticated_contexts[0], sr.SecPkgContextSizes)
 
     in_data = bytearray(data)
     in_token = bytearray(sizes.security_trailer)
-    in_message = sspi.SecBufferDesc(
+    in_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(in_data, sspi.SecBufferType.SECBUFFER_DATA),
-            sspi.SecBuffer(in_token, sspi.SecBufferType.SECBUFFER_TOKEN),
+            sr.SecBuffer(in_data, sr.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(in_token, sr.SecBufferType.SECBUFFER_TOKEN),
         ],
     )
-    sspi.encrypt_message(
+    sr.encrypt_message(
         authenticated_contexts[0],
         0,
         in_message,
@@ -287,8 +287,8 @@ def test_decrypt_message_failure(
 
     in_data[0] = 0 if in_data[0] == 255 else in_data[0] + 1
 
-    with pytest.raises(sspi.WindowsError) as e:
-        sspi.decrypt_message(
+    with pytest.raises(sr.WindowsError) as e:
+        sr.decrypt_message(
             authenticated_contexts[1],
             in_message,
             0,
@@ -300,24 +300,24 @@ def test_decrypt_message_failure(
 # https://github.com/Devolutions/sspi-rs/issues/84
 @pytest.mark.skipif(os.name != "nt", reason="SECBUFFER_STREAM not support with NTLM in sspi-rs")
 def test_encrypt_and_decrypt_stream(
-    authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
+    authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
     client_data = os.urandom(32)
     server_data = os.urandom(32)
 
-    sizes = sspi.query_context_attributes(authenticated_contexts[0], sspi.SecPkgContextSizes)
+    sizes = sr.query_context_attributes(authenticated_contexts[0], sr.SecPkgContextSizes)
 
     in_token = bytearray(sizes.security_trailer)
     in_data = bytearray(client_data)
-    in_message = sspi.SecBufferDesc(
+    in_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(in_token, sspi.SecBufferType.SECBUFFER_TOKEN),
-            sspi.SecBuffer(in_data, sspi.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(in_token, sr.SecBufferType.SECBUFFER_TOKEN),
+            sr.SecBuffer(in_data, sr.SecBufferType.SECBUFFER_DATA),
         ],
     )
-    sspi.encrypt_message(
+    sr.encrypt_message(
         authenticated_contexts[0],
-        sspi.QopFlags(0),
+        sr.QopFlags(0),
         in_message,
         0,
     )
@@ -338,13 +338,13 @@ def test_encrypt_and_decrypt_stream(
             ]
         )
     )
-    stream_message = sspi.SecBufferDesc(
+    stream_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(stream_data, sspi.SecBufferType.SECBUFFER_STREAM),
-            sspi.SecBuffer(None, sspi.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(stream_data, sr.SecBufferType.SECBUFFER_STREAM),
+            sr.SecBuffer(None, sr.SecBufferType.SECBUFFER_DATA),
         ]
     )
-    res = sspi.decrypt_message(
+    res = sr.decrypt_message(
         authenticated_contexts[1],
         stream_message,
         0,
@@ -355,15 +355,15 @@ def test_encrypt_and_decrypt_stream(
 
     in_token = bytearray(sizes.security_trailer)
     in_data = bytearray(server_data)
-    in_message = sspi.SecBufferDesc(
+    in_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(in_token, sspi.SecBufferType.SECBUFFER_TOKEN),
-            sspi.SecBuffer(in_data, sspi.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(in_token, sr.SecBufferType.SECBUFFER_TOKEN),
+            sr.SecBuffer(in_data, sr.SecBufferType.SECBUFFER_DATA),
         ],
     )
-    sspi.encrypt_message(
+    sr.encrypt_message(
         authenticated_contexts[1],
-        sspi.QopFlags(0),
+        sr.QopFlags(0),
         in_message,
         0,
     )
@@ -384,13 +384,13 @@ def test_encrypt_and_decrypt_stream(
             ]
         )
     )
-    stream_message = sspi.SecBufferDesc(
+    stream_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(stream_data, sspi.SecBufferType.SECBUFFER_STREAM),
-            sspi.SecBuffer(None, sspi.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(stream_data, sr.SecBufferType.SECBUFFER_STREAM),
+            sr.SecBuffer(None, sr.SecBufferType.SECBUFFER_DATA),
         ]
     )
-    res = sspi.decrypt_message(
+    res = sr.decrypt_message(
         authenticated_contexts[0],
         stream_message,
         0,
@@ -401,24 +401,24 @@ def test_encrypt_and_decrypt_stream(
 
 
 def test_encrypt_winrm(
-    authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
+    authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
     client_data = os.urandom(32)
     server_data = os.urandom(32)
 
-    sizes = sspi.query_context_attributes(authenticated_contexts[0], sspi.SecPkgContextSizes)
+    sizes = sr.query_context_attributes(authenticated_contexts[0], sr.SecPkgContextSizes)
 
     in_token = bytearray(sizes.security_trailer)
     in_data = bytearray(client_data)
-    in_message = sspi.SecBufferDesc(
+    in_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(in_token, sspi.SecBufferType.SECBUFFER_TOKEN),
-            sspi.SecBuffer(in_data, sspi.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(in_token, sr.SecBufferType.SECBUFFER_TOKEN),
+            sr.SecBuffer(in_data, sr.SecBufferType.SECBUFFER_DATA),
         ],
     )
-    sspi.encrypt_message(
+    sr.encrypt_message(
         authenticated_contexts[0],
-        sspi.QopFlags(0),
+        sr.QopFlags(0),
         in_message,
         0,
     )
@@ -431,7 +431,7 @@ def test_encrypt_winrm(
     assert len(in_message[1].data) == in_message[1].count
     assert bytes(in_data) == in_message[1].data
 
-    res = sspi.decrypt_message(
+    res = sr.decrypt_message(
         authenticated_contexts[1],
         in_message,
         0,
@@ -447,15 +447,15 @@ def test_encrypt_winrm(
 
     in_token = bytearray(sizes.security_trailer)
     in_data = bytearray(server_data)
-    in_message = sspi.SecBufferDesc(
+    in_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(in_token, sspi.SecBufferType.SECBUFFER_TOKEN),
-            sspi.SecBuffer(in_data, sspi.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(in_token, sr.SecBufferType.SECBUFFER_TOKEN),
+            sr.SecBuffer(in_data, sr.SecBufferType.SECBUFFER_DATA),
         ],
     )
-    sspi.encrypt_message(
+    sr.encrypt_message(
         authenticated_contexts[1],
-        sspi.QopFlags(0),
+        sr.QopFlags(0),
         in_message,
         0,
     )
@@ -468,7 +468,7 @@ def test_encrypt_winrm(
     assert len(in_message[1].data) == in_message[1].count
     assert bytes(in_data) == in_message[1].data
 
-    res = sspi.decrypt_message(
+    res = sr.decrypt_message(
         authenticated_contexts[0],
         in_message,
         0,
@@ -494,10 +494,10 @@ def test_encrypt_winrm(
 )
 def test_encrypt_dce(
     sign_header: bool,
-    authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
+    authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
     buffer_flags = (
-        sspi.SecBufferFlags.SECBUFFER_READONLY_WITH_CHECKSUM if sign_header else sspi.SecBufferFlags.SECBUFFER_READONLY
+        sr.SecBufferFlags.SECBUFFER_READONLY_WITH_CHECKSUM if sign_header else sr.SecBufferFlags.SECBUFFER_READONLY
     )
     client_data = os.urandom(32)
     client_header = os.urandom(24)
@@ -507,23 +507,23 @@ def test_encrypt_dce(
     server_header = os.urandom(24)
     server_trailer = os.urandom(8)
 
-    sizes = sspi.query_context_attributes(authenticated_contexts[0], sspi.SecPkgContextSizes)
+    sizes = sr.query_context_attributes(authenticated_contexts[0], sr.SecPkgContextSizes)
 
     in_header = bytearray(client_header)
     in_data = bytearray(client_data)
     in_trailer = bytearray(client_trailer)
     in_token = bytearray(sizes.security_trailer)
-    in_message = sspi.SecBufferDesc(
+    in_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(in_header, sspi.SecBufferType.SECBUFFER_DATA, buffer_flags),
-            sspi.SecBuffer(in_data, sspi.SecBufferType.SECBUFFER_DATA),
-            sspi.SecBuffer(in_trailer, sspi.SecBufferType.SECBUFFER_DATA, buffer_flags),
-            sspi.SecBuffer(in_token, sspi.SecBufferType.SECBUFFER_TOKEN),
+            sr.SecBuffer(in_header, sr.SecBufferType.SECBUFFER_DATA, buffer_flags),
+            sr.SecBuffer(in_data, sr.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(in_trailer, sr.SecBufferType.SECBUFFER_DATA, buffer_flags),
+            sr.SecBuffer(in_token, sr.SecBufferType.SECBUFFER_TOKEN),
         ],
     )
-    sspi.encrypt_message(
+    sr.encrypt_message(
         authenticated_contexts[0],
-        sspi.QopFlags(0),
+        sr.QopFlags(0),
         in_message,
         0,
     )
@@ -544,7 +544,7 @@ def test_encrypt_dce(
     assert len(in_message[3].data) == in_message[3].count
     assert bytes(in_token) == in_message[3].data
 
-    res = sspi.decrypt_message(
+    res = sr.decrypt_message(
         authenticated_contexts[1],
         in_message,
         0,
@@ -570,17 +570,17 @@ def test_encrypt_dce(
     in_data = bytearray(server_data)
     in_trailer = bytearray(server_trailer)
     in_token = bytearray(sizes.security_trailer)
-    in_message = sspi.SecBufferDesc(
+    in_message = sr.SecBufferDesc(
         [
-            sspi.SecBuffer(in_header, sspi.SecBufferType.SECBUFFER_DATA, buffer_flags),
-            sspi.SecBuffer(in_data, sspi.SecBufferType.SECBUFFER_DATA),
-            sspi.SecBuffer(in_trailer, sspi.SecBufferType.SECBUFFER_DATA, buffer_flags),
-            sspi.SecBuffer(in_token, sspi.SecBufferType.SECBUFFER_TOKEN),
+            sr.SecBuffer(in_header, sr.SecBufferType.SECBUFFER_DATA, buffer_flags),
+            sr.SecBuffer(in_data, sr.SecBufferType.SECBUFFER_DATA),
+            sr.SecBuffer(in_trailer, sr.SecBufferType.SECBUFFER_DATA, buffer_flags),
+            sr.SecBuffer(in_token, sr.SecBufferType.SECBUFFER_TOKEN),
         ],
     )
-    sspi.encrypt_message(
+    sr.encrypt_message(
         authenticated_contexts[1],
-        sspi.QopFlags(0),
+        sr.QopFlags(0),
         in_message,
         0,
     )
@@ -601,7 +601,7 @@ def test_encrypt_dce(
     assert len(in_message[3].data) == in_message[3].count
     assert bytes(in_token) == in_message[3].data
 
-    res = sspi.decrypt_message(
+    res = sr.decrypt_message(
         authenticated_contexts[0],
         in_message,
         0,

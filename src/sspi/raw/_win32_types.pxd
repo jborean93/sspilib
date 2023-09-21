@@ -15,7 +15,7 @@ cdef extern from "python_sspi.h":
     {
         if (WinError == NULL)
         {
-            PyObject *winerror = PyImport_ImportModule("sspi._winerror");
+            PyObject *winerror = PyImport_ImportModule("sspi.raw._winerror");
             if (winerror == NULL)
             {
                 PyErr_SetString(PyExc_RuntimeError, "Failed to import custom WindowsError.");
@@ -55,10 +55,10 @@ cdef extern from "python_sspi.h":
     ctypedef _SecHandle SecHandle
     ctypedef SecHandle *PSecHandle
 
-    ctypedef SecHandle CredHandle
+    ctypedef SecHandle _CredHandle "CredHandle"
     ctypedef PSecHandle PCredHandle
 
-    ctypedef SecHandle CtxtHandle
+    ctypedef SecHandle _CtxtHandle "CtxtHandle"
     ctypedef PSecHandle PCtxtHandle
 
     cdef struct _SECURITY_INTEGER:

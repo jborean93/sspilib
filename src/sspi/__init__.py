@@ -3,116 +3,28 @@
 
 from __future__ import annotations
 
-import sys
+import sspi.raw as raw
+from sspi.raw import AscReq, AscRet, IscReq, IscRet, SecChannelBindings, WindowsError
 
-from ._context_attributes import (
-    SecPkgContext,
-    SecPkgContextNames,
-    SecPkgContextPackageInfo,
-    SecPkgContextSessionKey,
-    SecPkgContextSizes,
-    query_context_attributes,
-)
-from ._credential import (
-    AuthIdentity,
-    Credential,
-    CredentialUse,
-    WinNTAuthFlags,
-    WinNTAuthIdentity,
-    acquire_credentials_handle,
-)
-from ._credential_attributes import (
-    KdcProxySettingsFlags,
-    SecPkgCred,
-    SecPkgCredKdcProxySettings,
-    set_credentials_attributes,
-)
-from ._message import (
-    QopFlags,
-    decrypt_message,
-    encrypt_message,
-    make_signature,
-    verify_signature,
-)
-from ._ntstatus import NtStatus
-from ._security_buffer import (
-    SECBUFFER_VERSION,
-    SecBuffer,
-    SecBufferDesc,
-    SecBufferFlags,
-    SecBufferType,
-    SecChannelBindings,
-)
-from ._security_context import (
-    AcceptContextResult,
-    AcceptorSecurityContext,
-    AscReq,
-    AscRet,
-    InitializeContextResult,
-    InitiatorSecurityContext,
-    IscReq,
-    IscRet,
+from ._credential import UserCredential
+from ._sec_context import (
+    ClientSecurityContext,
     SecurityContext,
-    TargetDataRep,
-    accept_security_context,
-    complete_auth_token,
-    initialize_security_context,
+    ServerSecurityContext,
+    UnwrapResult,
 )
-from ._security_package import (
-    SecPkgInfo,
-    SecurityPackageCapability,
-    enumerate_security_packages,
-)
-
-if sys.platform == "win32":
-    WindowsError = WindowsError
-else:
-    from ._winerror import WindowsError
 
 __all__ = [
-    "SECBUFFER_VERSION",
-    "AcceptContextResult",
-    "AcceptorSecurityContext",
     "AscReq",
     "AscRet",
-    "AuthIdentity",
-    "Credential",
-    "CredentialUse",
-    "InitializeContextResult",
-    "InitiatorSecurityContext",
     "IscReq",
     "IscRet",
-    "KdcProxySettingsFlags",
-    "NtStatus",
-    "QopFlags",
-    "SecBuffer",
-    "SecBufferDesc",
-    "SecBufferFlags",
-    "SecBufferType",
+    "ClientSecurityContext",
     "SecChannelBindings",
-    "SecPkgContext",
-    "SecPkgContextNames",
-    "SecPkgContextPackageInfo",
-    "SecPkgContextSessionKey",
-    "SecPkgContextSizes",
-    "SecPkgCred",
-    "SecPkgCredKdcProxySettings",
-    "SecPkgInfo",
-    "SecurityPackageCapability",
     "SecurityContext",
-    "TargetDataRep",
+    "ServerSecurityContext",
+    "UnwrapResult",
+    "UserCredential",
     "WindowsError",
-    "WinNTAuthFlags",
-    "WinNTAuthIdentity",
-    "accept_security_context",
-    "acquire_credentials_handle",
-    "complete_auth_token",
-    "decrypt_message",
-    "encrypt_message",
-    "enumerate_security_packages",
-    "initialize_security_context",
-    "make_signature",
-    "query_context_attributes",
-    "set_credentials_attributes",
-    "verify_signature",
+    "raw",
 ]

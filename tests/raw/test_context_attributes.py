@@ -7,20 +7,20 @@ import os
 
 import pytest
 
-import sspi
+import sspi.raw as sr
 
 
 # https://github.com/Devolutions/sspi-rs/issues/169
 @pytest.mark.skipif(os.name != "nt", reason="SECPKG_ATTR_NAMES is not implemented in sspi-rs")
 def test_query_names(
-    authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
+    authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
-    c_actual = sspi.query_context_attributes(authenticated_contexts[0], sspi.SecPkgContextNames)
-    assert isinstance(c_actual, sspi.SecPkgContextNames)
+    c_actual = sr.query_context_attributes(authenticated_contexts[0], sr.SecPkgContextNames)
+    assert isinstance(c_actual, sr.SecPkgContextNames)
     assert isinstance(c_actual.username, str)
 
-    s_actual = sspi.query_context_attributes(authenticated_contexts[1], sspi.SecPkgContextNames)
-    assert isinstance(s_actual, sspi.SecPkgContextNames)
+    s_actual = sr.query_context_attributes(authenticated_contexts[1], sr.SecPkgContextNames)
+    assert isinstance(s_actual, sr.SecPkgContextNames)
     assert isinstance(s_actual.username, str)
 
     assert c_actual.username == s_actual.username
@@ -28,20 +28,20 @@ def test_query_names(
 
 
 def test_query_package_info(
-    authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
+    authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
-    c_actual = sspi.query_context_attributes(authenticated_contexts[0], sspi.SecPkgContextPackageInfo)
-    assert isinstance(c_actual, sspi.SecPkgContextPackageInfo)
-    assert isinstance(c_actual.capabilities, sspi.SecurityPackageCapability)
+    c_actual = sr.query_context_attributes(authenticated_contexts[0], sr.SecPkgContextPackageInfo)
+    assert isinstance(c_actual, sr.SecPkgContextPackageInfo)
+    assert isinstance(c_actual.capabilities, sr.SecurityPackageCapability)
     assert isinstance(c_actual.version, int)
     assert isinstance(c_actual.rpcid, int)
     assert isinstance(c_actual.max_token, int)
     assert isinstance(c_actual.name, str)
     assert isinstance(c_actual.comment, str)
 
-    s_actual = sspi.query_context_attributes(authenticated_contexts[1], sspi.SecPkgContextPackageInfo)
-    assert isinstance(s_actual, sspi.SecPkgContextPackageInfo)
-    assert isinstance(s_actual.capabilities, sspi.SecurityPackageCapability)
+    s_actual = sr.query_context_attributes(authenticated_contexts[1], sr.SecPkgContextPackageInfo)
+    assert isinstance(s_actual, sr.SecPkgContextPackageInfo)
+    assert isinstance(s_actual.capabilities, sr.SecurityPackageCapability)
     assert isinstance(s_actual.version, int)
     assert isinstance(s_actual.rpcid, int)
     assert isinstance(s_actual.max_token, int)
@@ -60,14 +60,14 @@ def test_query_package_info(
 # https://github.com/Devolutions/sspi-rs/issues/168
 @pytest.mark.skipif(os.name != "nt", reason="SECPKG_ATTR_SESSION_KEY is not implemented in sspi-rs")
 def test_query_session_keys(
-    authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
+    authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
-    c_actual = sspi.query_context_attributes(authenticated_contexts[0], sspi.SecPkgContextSessionKey)
-    assert isinstance(c_actual, sspi.SecPkgContextSessionKey)
+    c_actual = sr.query_context_attributes(authenticated_contexts[0], sr.SecPkgContextSessionKey)
+    assert isinstance(c_actual, sr.SecPkgContextSessionKey)
     assert isinstance(c_actual.session_key, bytes)
 
-    s_actual = sspi.query_context_attributes(authenticated_contexts[1], sspi.SecPkgContextSessionKey)
-    assert isinstance(s_actual, sspi.SecPkgContextSessionKey)
+    s_actual = sr.query_context_attributes(authenticated_contexts[1], sr.SecPkgContextSessionKey)
+    assert isinstance(s_actual, sr.SecPkgContextSessionKey)
     assert isinstance(s_actual.session_key, bytes)
 
     assert c_actual.session_key == s_actual.session_key
@@ -75,17 +75,17 @@ def test_query_session_keys(
 
 
 def test_query_sizes(
-    authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
+    authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
-    c_actual = sspi.query_context_attributes(authenticated_contexts[0], sspi.SecPkgContextSizes)
-    assert isinstance(c_actual, sspi.SecPkgContextSizes)
+    c_actual = sr.query_context_attributes(authenticated_contexts[0], sr.SecPkgContextSizes)
+    assert isinstance(c_actual, sr.SecPkgContextSizes)
     assert isinstance(c_actual.max_signature, int)
     assert isinstance(c_actual.max_token, int)
     assert isinstance(c_actual.block_size, int)
     assert isinstance(c_actual.security_trailer, int)
 
-    s_actual = sspi.query_context_attributes(authenticated_contexts[1], sspi.SecPkgContextSizes)
-    assert isinstance(s_actual, sspi.SecPkgContextSizes)
+    s_actual = sr.query_context_attributes(authenticated_contexts[1], sr.SecPkgContextSizes)
+    assert isinstance(s_actual, sr.SecPkgContextSizes)
     assert isinstance(s_actual.max_signature, int)
     assert isinstance(s_actual.max_token, int)
     assert isinstance(s_actual.block_size, int)

@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import os
 import socket
-import typing as t
 
 import pytest
 
@@ -13,103 +12,40 @@ import sspi
 
 
 @pytest.fixture()
-def authenticated_contexts() -> tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext]:
+def initial_contexts() -> tuple[sspi.ClientSecurityContext, sspi.ServerSecurityContext]:
     spn = f"host/{socket.gethostname()}"
 
     # sspi-rs only supports acceptors for NTLM at this point in time. it also
     # cannot rely on implicit creds
     if os.name == "nt":
-        auth_data = None
-        sec_provider = "Negotiate"
+        c_cred = sspi.UserCredential(protocol="NTLM")
+        s_cred = sspi.UserCredential(usage="accept")
     else:
-        auth_data = sspi.WinNTAuthIdentity(username="user", password="pass")
-        sec_provider = "NTLM"
+        c_cred = sspi.UserCredential("user", "pass", protocol="NTLM")
+        s_cred = sspi.UserCredential("user", "pass", protocol="NTLM", usage="accept")
 
-    c_cred = sspi.acquire_credentials_handle(
-        None,
-        sec_provider,
-        sspi.CredentialUse.SECPKG_CRED_OUTBOUND,
-        auth_data=auth_data,
-    )
-    s_cred = sspi.acquire_credentials_handle(
-        None,
-        sec_provider,
-        sspi.CredentialUse.SECPKG_CRED_INBOUND,
-        auth_data=auth_data,
-    )
-    isc_req = (
-        sspi.IscReq.ISC_REQ_ALLOCATE_MEMORY
-        | sspi.IscReq.ISC_REQ_CONFIDENTIALITY
-        | sspi.IscReq.ISC_REQ_INTEGRITY
-        | sspi.IscReq.ISC_REQ_SEQUENCE_DETECT
-        | sspi.IscReq.ISC_REQ_REPLAY_DETECT
-    )
-    asc_req = (
-        sspi.AscReq.ASC_REQ_ALLOCATE_MEMORY
-        | sspi.AscReq.ASC_REQ_CONFIDENTIALITY
-        | sspi.AscReq.ASC_REQ_INTEGRITY
-        | sspi.AscReq.ASC_REQ_SEQUENCE_DETECT
-        | sspi.AscReq.ASC_REQ_REPLAY_DETECT
-    )
+    c_ctx = sspi.ClientSecurityContext(target_name=spn, credential=c_cred)
+    s_ctx = sspi.ServerSecurityContext(credential=s_cred)
 
-    c_ctx = s_ctx = server_token = None
-    while True:
-        c_input_buffers = None
-        if server_token:
-            c_input_buffers = sspi.SecBufferDesc(
-                [
-                    sspi.SecBuffer(server_token, sspi.SecBufferType.SECBUFFER_TOKEN),
-                ]
-            )
+    return c_ctx, s_ctx
 
-        c_output_buffers = sspi.SecBufferDesc(
-            [
-                sspi.SecBuffer(None, sspi.SecBufferType.SECBUFFER_TOKEN),
-            ]
-        )
-        c_ctx, c_status = sspi.initialize_security_context(
-            credential=c_cred,
-            context=c_ctx,
-            target_name=spn,
-            context_req=isc_req,
-            target_data_rep=sspi.TargetDataRep.SECURITY_NATIVE_DREP,
-            input_buffers=c_input_buffers,
-            output_buffers=c_output_buffers,
-        )
 
-        if c_output_buffers[0].count:
-            s_input_buffers = sspi.SecBufferDesc(
-                [
-                    sspi.SecBuffer(c_output_buffers[0].dangerous_get_view(), sspi.SecBufferType.SECBUFFER_TOKEN),
-                ]
-            )
-            s_output_buffers = sspi.SecBufferDesc(
-                [
-                    sspi.SecBuffer(None, sspi.SecBufferType.SECBUFFER_TOKEN),
-                ]
-            )
-            s_ctx, s_status = sspi.accept_security_context(
-                credential=s_cred,
-                context=s_ctx,
-                input_buffers=s_input_buffers,
-                context_req=asc_req,
-                target_data_rep=sspi.TargetDataRep.SECURITY_NATIVE_DREP,
-                output_buffers=s_output_buffers,
-            )
+@pytest.fixture()
+def authenticated_contexts(
+    initial_contexts: tuple[sspi.ClientSecurityContext, sspi.ServerSecurityContext],
+) -> tuple[sspi.ClientSecurityContext, sspi.ServerSecurityContext]:
+    c_ctx, s_ctx = initial_contexts
 
-            if s_output_buffers[0].count:
-                server_token = bytearray(s_output_buffers[0].data)
-            elif s_status == sspi.NtStatus.SEC_E_OK:
-                break
-            elif s_status == sspi.NtStatus.SEC_I_COMPLETE_NEEDED:
-                sspi.complete_auth_token(s_ctx, s_input_buffers)
-                break
-            else:
-                raise ValueError(f"Expected SEC_E_OK but got {c_status.name}")
+    s_token = None
+    while not (c_ctx.complete and not s_token):
+        c_token = c_ctx.step(s_token)
 
-        elif c_status == sspi.NtStatus.SEC_E_OK:
-            break
+        if c_token:
+            s_token = s_ctx.step(c_token)
         else:
-            raise ValueError(f"Expected SEC_E_OK but got {c_status.name}")
+            s_token = None
 
-    return c_ctx, t.cast(sspi.AcceptorSecurityContext, s_ctx)
+    assert c_ctx.complete
+    assert s_ctx.complete
+
+    return c_ctx, s_ctx
