@@ -48,6 +48,17 @@ python -m pip install -e .
 From there an editor like VSCode can be used to make changes and run the test suite.
 To recompile the Cython files after a change run the `build_ext --inplace` command.
 
+If building on Linux, a version of `libsspi.so` from [sspi-rs](https://github.com/Devolutions/sspi-rs) must be compiled with rust.
+
+```bash
+cargo build \
+    --package sspi-ffi \
+    --release
+
+export LD_LIBRARY_PATH="${PWD}/target/release"
+export LIBRARY_PATH="${PWD}/target/release"
+```
+
 ## Structure
 
 This library is merely a wrapper around the SSPI APIs.
@@ -58,3 +69,13 @@ Errors are raised as a `WinError` which contains the error message as formatted 
 Some of the objects and constants are exposed as Python clasess/dataclasses/enums for ease of use.
 Some functions expose buffers that contain dynamically allocated memory from SSPI if requested and need to be explicitly freed if needed.
 Please read through the docstring of the function that will be used to learn more about how to use them.
+
+## Linux Support
+
+While SSPI is a Windows only API, this package ships with `manylinux2014_x86_64` compatible wheels that use [sspi-rs](https://github.com/Devolutions/sspi-rs).
+Support for this is experimental as all the authentication logic is contained in that external API.
+The interface for `sspi-rs` is exactly the same as SSPI on Windows so the same code should theoretically be possible.
+In saying this, compatibility with SSPI actual is not 100% there so use at your own risk.
+
+It is recommended to use a library that wraps GSSAPI on non-Windows platforms like [python-gssapi](https://github.com/pythongssapi/python-gssapi).
+There is no support for any other architectures on Linux except `x86_64` and as `sspi-rs` only supports glibc it cannot be used with musl based distributions like Alpine.

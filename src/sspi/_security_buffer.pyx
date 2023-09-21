@@ -3,61 +3,60 @@
 
 from __future__ import annotations
 
-from cpython.exc cimport PyErr_SetFromWindowsErr
 from libc.stdlib cimport calloc, free, malloc
 
 import dataclasses
 import enum
 
 
-cdef extern from "Security.h":
-    unsigned long _SECBUFFER_VERSION "SECBUFFER_VERSION"
+cdef extern from "python_sspi.h":
+    unsigned int _SECBUFFER_VERSION "SECBUFFER_VERSION"
 
-    unsigned long _SECBUFFER_EMPTY "SECBUFFER_EMPTY"
-    unsigned long _SECBUFFER_DATA "SECBUFFER_DATA"
-    unsigned long _SECBUFFER_TOKEN "SECBUFFER_TOKEN"
-    unsigned long _SECBUFFER_PKG_PARAMS "SECBUFFER_PKG_PARAMS"
-    unsigned long _SECBUFFER_MISSING "SECBUFFER_MISSING"
-    unsigned long _SECBUFFER_EXTRA "SECBUFFER_EXTRA"
-    unsigned long _SECBUFFER_STREAM_TRAILER "SECBUFFER_STREAM_TRAILER"
-    unsigned long _SECBUFFER_STREAM_HEADER "SECBUFFER_STREAM_HEADER"
-    unsigned long _SECBUFFER_NEGOTIATION_INFO "SECBUFFER_NEGOTIATION_INFO"
-    unsigned long _SECBUFFER_PADDING "SECBUFFER_PADDING"
-    unsigned long _SECBUFFER_STREAM "SECBUFFER_STREAM"
-    unsigned long _SECBUFFER_MECHLIST "SECBUFFER_MECHLIST"
-    unsigned long _SECBUFFER_MECHLIST_SIGNATURE "SECBUFFER_MECHLIST_SIGNATURE"
-    unsigned long _SECBUFFER_TARGET "SECBUFFER_TARGET"
-    unsigned long _SECBUFFER_CHANNEL_BINDINGS "SECBUFFER_CHANNEL_BINDINGS"
-    unsigned long _SECBUFFER_CHANGE_PASS_RESPONSE "SECBUFFER_CHANGE_PASS_RESPONSE"
-    unsigned long _SECBUFFER_TARGET_HOST "SECBUFFER_TARGET_HOST"
-    unsigned long _SECBUFFER_ALERT "SECBUFFER_ALERT"
-    unsigned long _SECBUFFER_APPLICATION_PROTOCOLS "SECBUFFER_APPLICATION_PROTOCOLS"
-    unsigned long _SECBUFFER_SRTP_PROTECTION_PROFILES "SECBUFFER_SRTP_PROTECTION_PROFILES"
-    unsigned long _SECBUFFER_SRTP_MASTER_KEY_IDENTIFIER "SECBUFFER_SRTP_MASTER_KEY_IDENTIFIER"
-    unsigned long _SECBUFFER_TOKEN_BINDING "SECBUFFER_TOKEN_BINDING"
-    unsigned long _SECBUFFER_PRESHARED_KEY "SECBUFFER_PRESHARED_KEY"
-    unsigned long _SECBUFFER_PRESHARED_KEY_IDENTITY "SECBUFFER_PRESHARED_KEY_IDENTITY"
-    unsigned long _SECBUFFER_DTLS_MTU "SECBUFFER_DTLS_MTU"
-    unsigned long _SECBUFFER_SEND_GENERIC_TLS_EXTENSION "SECBUFFER_SEND_GENERIC_TLS_EXTENSION"
-    unsigned long _SECBUFFER_SUBSCRIBE_GENERIC_TLS_EXTENSION "SECBUFFER_SUBSCRIBE_GENERIC_TLS_EXTENSION"
-    unsigned long _SECBUFFER_FLAGS "SECBUFFER_FLAGS"
-    unsigned long _SECBUFFER_TRAFFIC_SECRETS "SECBUFFER_TRAFFIC_SECRETS"
-    unsigned long _SECBUFFER_CERTIFICATE_REQUEST_CONTEXT "SECBUFFER_CERTIFICATE_REQUEST_CONTEXT"
+    unsigned int _SECBUFFER_EMPTY "SECBUFFER_EMPTY"
+    unsigned int _SECBUFFER_DATA "SECBUFFER_DATA"
+    unsigned int _SECBUFFER_TOKEN "SECBUFFER_TOKEN"
+    unsigned int _SECBUFFER_PKG_PARAMS "SECBUFFER_PKG_PARAMS"
+    unsigned int _SECBUFFER_MISSING "SECBUFFER_MISSING"
+    unsigned int _SECBUFFER_EXTRA "SECBUFFER_EXTRA"
+    unsigned int _SECBUFFER_STREAM_TRAILER "SECBUFFER_STREAM_TRAILER"
+    unsigned int _SECBUFFER_STREAM_HEADER "SECBUFFER_STREAM_HEADER"
+    unsigned int _SECBUFFER_NEGOTIATION_INFO "SECBUFFER_NEGOTIATION_INFO"
+    unsigned int _SECBUFFER_PADDING "SECBUFFER_PADDING"
+    unsigned int _SECBUFFER_STREAM "SECBUFFER_STREAM"
+    unsigned int _SECBUFFER_MECHLIST "SECBUFFER_MECHLIST"
+    unsigned int _SECBUFFER_MECHLIST_SIGNATURE "SECBUFFER_MECHLIST_SIGNATURE"
+    unsigned int _SECBUFFER_TARGET "SECBUFFER_TARGET"
+    unsigned int _SECBUFFER_CHANNEL_BINDINGS "SECBUFFER_CHANNEL_BINDINGS"
+    unsigned int _SECBUFFER_CHANGE_PASS_RESPONSE "SECBUFFER_CHANGE_PASS_RESPONSE"
+    unsigned int _SECBUFFER_TARGET_HOST "SECBUFFER_TARGET_HOST"
+    unsigned int _SECBUFFER_ALERT "SECBUFFER_ALERT"
+    unsigned int _SECBUFFER_APPLICATION_PROTOCOLS "SECBUFFER_APPLICATION_PROTOCOLS"
+    unsigned int _SECBUFFER_SRTP_PROTECTION_PROFILES "SECBUFFER_SRTP_PROTECTION_PROFILES"
+    unsigned int _SECBUFFER_SRTP_MASTER_KEY_IDENTIFIER "SECBUFFER_SRTP_MASTER_KEY_IDENTIFIER"
+    unsigned int _SECBUFFER_TOKEN_BINDING "SECBUFFER_TOKEN_BINDING"
+    unsigned int _SECBUFFER_PRESHARED_KEY "SECBUFFER_PRESHARED_KEY"
+    unsigned int _SECBUFFER_PRESHARED_KEY_IDENTITY "SECBUFFER_PRESHARED_KEY_IDENTITY"
+    unsigned int _SECBUFFER_DTLS_MTU "SECBUFFER_DTLS_MTU"
+    unsigned int _SECBUFFER_SEND_GENERIC_TLS_EXTENSION "SECBUFFER_SEND_GENERIC_TLS_EXTENSION"
+    unsigned int _SECBUFFER_SUBSCRIBE_GENERIC_TLS_EXTENSION "SECBUFFER_SUBSCRIBE_GENERIC_TLS_EXTENSION"
+    unsigned int _SECBUFFER_FLAGS "SECBUFFER_FLAGS"
+    unsigned int _SECBUFFER_TRAFFIC_SECRETS "SECBUFFER_TRAFFIC_SECRETS"
+    unsigned int _SECBUFFER_CERTIFICATE_REQUEST_CONTEXT "SECBUFFER_CERTIFICATE_REQUEST_CONTEXT"
 
-    unsigned long _SECBUFFER_ATTRMASK "SECBUFFER_ATTRMASK"
-    unsigned long _SECBUFFER_READONLY "SECBUFFER_READONLY"
-    unsigned long _SECBUFFER_READONLY_WITH_CHECKSUM "SECBUFFER_READONLY_WITH_CHECKSUM"
-    unsigned long _SECBUFFER_RESERVED "SECBUFFER_RESERVED"
+    unsigned int _SECBUFFER_ATTRMASK "SECBUFFER_ATTRMASK"
+    unsigned int _SECBUFFER_READONLY "SECBUFFER_READONLY"
+    unsigned int _SECBUFFER_READONLY_WITH_CHECKSUM "SECBUFFER_READONLY_WITH_CHECKSUM"
+    unsigned int _SECBUFFER_RESERVED "SECBUFFER_RESERVED"
 
     cdef struct _SEC_CHANNEL_BINDINGS:
-        unsigned long  dwInitiatorAddrType
-        unsigned long  cbInitiatorLength
-        unsigned long  dwInitiatorOffset
-        unsigned long  dwAcceptorAddrType
-        unsigned long  cbAcceptorLength
-        unsigned long  dwAcceptorOffset
-        unsigned long  cbApplicationDataLength
-        unsigned long  dwApplicationDataOffset
+        unsigned int  dwInitiatorAddrType
+        unsigned int  cbInitiatorLength
+        unsigned int  dwInitiatorOffset
+        unsigned int  dwAcceptorAddrType
+        unsigned int  cbAcceptorLength
+        unsigned int  dwAcceptorOffset
+        unsigned int  cbApplicationDataLength
+        unsigned int  dwApplicationDataOffset
     ctypedef _SEC_CHANNEL_BINDINGS SEC_CHANNEL_BINDINGS
     ctypedef SEC_CHANNEL_BINDINGS *PSEC_CHANNEL_BINDINGS
 
@@ -111,7 +110,7 @@ cdef class SecBufferDesc:
         SecBufferDesc self,
         buffers: list[SecBuffer],
         *,
-        unsigned long version = SECBUFFER_VERSION,
+        unsigned int version = SECBUFFER_VERSION,
     ):
         self._buffers = buffers
         self.raw.ulVersion = version
@@ -173,7 +172,7 @@ cdef class SecBuffer:
 
         if data is not None and len(data):
             self._buffer = data
-            self.raw.cbBuffer = <unsigned long>len(data)
+            self.raw.cbBuffer = <unsigned int>len(data)
             self.raw.pvBuffer = &self._buffer[0]
         else:
             self._buffer = None
@@ -235,9 +234,9 @@ cdef class SecChannelBindings:
     def __init__(
         SecChannelBindings self,
         *,
-        unsigned long initiator_addr_type = 0,
+        unsigned int initiator_addr_type = 0,
         const unsigned char[:] initiator_addr = None,
-        unsigned long acceptor_addr_type = 0,
+        unsigned int acceptor_addr_type = 0,
         const unsigned char[:] acceptor_addr = None,
         const unsigned char[:] application_data = None,
     ):

@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import os
+
 import sspi
 
 
@@ -14,7 +16,15 @@ def test_set_kdc_proxy_default() -> None:
     assert repr(kdc_proxy) == "SecPkgCredKdcProxySettings(flags=0, proxy_server=None)"
 
     # While we can't verify it we can at least make sure it doesn't fail to set.
-    cred = sspi.acquire_credentials_handle(None, "Kerberos", sspi.CredentialUse.SECPKG_CRED_OUTBOUND)
+    auth_data = None
+    if os.name != "nt":
+        auth_data = sspi.WinNTAuthIdentity(username="user", password="pass")
+    cred = sspi.acquire_credentials_handle(
+        None,
+        "Kerberos",
+        sspi.CredentialUse.SECPKG_CRED_OUTBOUND,
+        auth_data=auth_data,
+    )
     sspi.set_credentials_attributes(cred, kdc_proxy)
 
 
@@ -26,7 +36,15 @@ def test_set_kdc_proxy_flags() -> None:
     assert repr(kdc_proxy) == "SecPkgCredKdcProxySettings(flags=1, proxy_server=None)"
 
     # While we can't verify it we can at least make sure it doesn't fail to set.
-    cred = sspi.acquire_credentials_handle(None, "Kerberos", sspi.CredentialUse.SECPKG_CRED_OUTBOUND)
+    auth_data = None
+    if os.name != "nt":
+        auth_data = sspi.WinNTAuthIdentity(username="user", password="pass")
+    cred = sspi.acquire_credentials_handle(
+        None,
+        "Kerberos",
+        sspi.CredentialUse.SECPKG_CRED_OUTBOUND,
+        auth_data=auth_data,
+    )
     sspi.set_credentials_attributes(cred, kdc_proxy)
 
 
@@ -39,5 +57,13 @@ def test_set_kdc_proxy_server() -> None:
     assert repr(kdc_proxy) == "SecPkgCredKdcProxySettings(flags=0, proxy_server='kdc.\U0001F4A0.com:443:kdc\\x00proxy')"
 
     # While we can't verify it we can at least make sure it doesn't fail to set.
-    cred = sspi.acquire_credentials_handle(None, "Kerberos", sspi.CredentialUse.SECPKG_CRED_OUTBOUND)
+    auth_data = None
+    if os.name != "nt":
+        auth_data = sspi.WinNTAuthIdentity(username="user", password="pass")
+    cred = sspi.acquire_credentials_handle(
+        None,
+        "Kerberos",
+        sspi.CredentialUse.SECPKG_CRED_OUTBOUND,
+        auth_data=auth_data,
+    )
     sspi.set_credentials_attributes(cred, kdc_proxy)

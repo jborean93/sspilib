@@ -5,7 +5,6 @@ from __future__ import annotations
 
 import enum
 
-from cpython.exc cimport PyErr_SetFromWindowsErr
 from cpython.unicode cimport PyUnicode_GET_LENGTH
 from libc.stdlib cimport free, malloc
 
@@ -14,15 +13,15 @@ from sspi._text cimport WideCharString, wide_char_to_str
 from sspi._win32_types cimport *
 
 
-cdef extern from "Security.h":
-    unsigned long SECPKG_CRED_ATTR_NAMES
-    unsigned long SECPKG_CRED_ATTR_SSI_PROVIDER
-    unsigned long SECPKG_CRED_ATTR_KDC_PROXY_SETTINGS
-    unsigned long SECPKG_CRED_ATTR_CERT
-    unsigned long SECPKG_CRED_ATTR_PAC_BYPASS
+cdef extern from "python_sspi.h":
+    unsigned int SECPKG_CRED_ATTR_NAMES
+    unsigned int SECPKG_CRED_ATTR_SSI_PROVIDER
+    unsigned int SECPKG_CRED_ATTR_KDC_PROXY_SETTINGS
+    unsigned int SECPKG_CRED_ATTR_CERT
+    unsigned int SECPKG_CRED_ATTR_PAC_BYPASS
 
-    unsigned long KDC_PROXY_SETTINGS_V1
-    unsigned long _KDC_PROXY_SETTINGS_FLAGS_FORCEPROXY "KDC_PROXY_SETTINGS_FLAGS_FORCEPROXY"
+    unsigned int KDC_PROXY_SETTINGS_V1
+    unsigned int _KDC_PROXY_SETTINGS_FLAGS_FORCEPROXY "KDC_PROXY_SETTINGS_FLAGS_FORCEPROXY"
 
     cdef struct _SecPkgCredentials_KdcProxySettingsW:
         ULONG Version
@@ -37,9 +36,9 @@ cdef extern from "Security.h":
     # https://learn.microsoft.com/en-us/windows/win32/api/sspi/nf-sspi-setcredentialsattributesw
     SECURITY_STATUS SetCredentialsAttributesW(
         PCredHandle   phCredential,
-        unsigned long ulAttribute,
+        unsigned int ulAttribute,
         void          *pBuffer,
-        unsigned long cbBuffer
+        unsigned int cbBuffer
     ) nogil
 
 
@@ -49,7 +48,7 @@ class KdcProxySettingsFlags(enum.IntEnum):
 
 cdef class SecPkgCred:
 
-    cdef (unsigned long, void *, unsigned long) __c_value__(SecPkgCred self):
+    cdef (unsigned int, void *, unsigned int) __c_value__(SecPkgCred self):
         return (0, NULL, 0)
 
 cdef class SecPkgCredKdcProxySettings(SecPkgCred):
@@ -62,7 +61,7 @@ cdef class SecPkgCredKdcProxySettings(SecPkgCred):
         proxy_server: str | None = None,
     ):
         cdef WideCharString proxy_wchar = WideCharString(proxy_server)
-        cdef int proxy_wchar_len = proxy_wchar.length * sizeof(wchar_t)
+        cdef int proxy_wchar_len = proxy_wchar.length * sizeof(WCHAR)
         cdef unsigned char[:] temp_ptr = None
 
         raw_length = sizeof(SecPkgCredentials_KdcProxySettingsW) + proxy_wchar_len
@@ -93,8 +92,8 @@ cdef class SecPkgCredKdcProxySettings(SecPkgCred):
             free(self.raw)
             self.raw = NULL
 
-    cdef (unsigned long, void *, unsigned long) __c_value__(SecPkgCredKdcProxySettings self):
-        cdef unsigned long length = sizeof(SecPkgCredentials_KdcProxySettingsW) + \
+    cdef (unsigned int, void *, unsigned int) __c_value__(SecPkgCredKdcProxySettings self):
+        cdef unsigned int length = sizeof(SecPkgCredentials_KdcProxySettingsW) + \
             self.raw.ProxyServerLength + \
             self.raw.ClientTlsCredLength
         return (SECPKG_CRED_ATTR_KDC_PROXY_SETTINGS, self.raw, length)
@@ -117,7 +116,7 @@ cdef class SecPkgCredKdcProxySettings(SecPkgCred):
 
     @property
     def proxy_server(SecPkgCredKdcProxySettings self) -> str | None:
-        cdef const wchar_t *raw = NULL
+        cdef LPWSTR raw = NULL
         cdef int size = -1
 
         cdef unsigned char [:] raw_view = None
@@ -125,8 +124,8 @@ cdef class SecPkgCredKdcProxySettings(SecPkgCred):
             raw_view = <unsigned char [:self.raw.ProxyServerOffset + self.raw.ProxyServerLength]> \
                 <unsigned char*>self.raw
 
-            raw = <wchar_t*>&raw_view[self.raw.ProxyServerOffset]
-            size = self.raw.ProxyServerLength // sizeof(wchar_t)
+            raw = <LPWSTR>&raw_view[self.raw.ProxyServerOffset]
+            size = self.raw.ProxyServerLength // sizeof(WCHAR)
 
         return wide_char_to_str(raw, size)
 
@@ -134,7 +133,7 @@ def set_credentials_attributes(
     Credential credential not None,
     SecPkgCred attribute not None,
 ) -> None:
-    cdef (unsigned long, void*, unsigned long) raw = attribute.__c_value__()
+    cdef (unsigned int, void*, unsigned int) raw = attribute.__c_value__()
 
     with nogil:
         res = SetCredentialsAttributesW(

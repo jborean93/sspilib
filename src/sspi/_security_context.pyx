@@ -6,7 +6,7 @@ from __future__ import annotations
 import collections
 import enum
 
-from cpython.exc cimport PyErr_SetFromWindowsErr
+from libc.stdint cimport uint64_t
 
 from sspi._credential cimport Credential
 from sspi._security_buffer cimport PSecBufferDesc, SecBufferDesc
@@ -16,127 +16,127 @@ from sspi._win32_types cimport *
 from sspi._ntstatus import NtStatus
 
 
-cdef extern from "Security.h":
-    unsigned long _SECURITY_NATIVE_DREP "SECURITY_NATIVE_DREP"
-    unsigned long _SECURITY_NETWORK_DREP "SECURITY_NETWORK_DREP"
+cdef extern from "python_sspi.h":
+    unsigned int _SECURITY_NATIVE_DREP "SECURITY_NATIVE_DREP"
+    unsigned int _SECURITY_NETWORK_DREP "SECURITY_NETWORK_DREP"
 
-    unsigned long _ASC_REQ_DELEGATE "ASC_REQ_DELEGATE"
-    unsigned long _ASC_REQ_MUTUAL_AUTH "ASC_REQ_MUTUAL_AUTH"
-    unsigned long _ASC_REQ_REPLAY_DETECT "ASC_REQ_REPLAY_DETECT"
-    unsigned long _ASC_REQ_SEQUENCE_DETECT "ASC_REQ_SEQUENCE_DETECT"
-    unsigned long _ASC_REQ_CONFIDENTIALITY "ASC_REQ_CONFIDENTIALITY"
-    unsigned long _ASC_REQ_USE_SESSION_KEY "ASC_REQ_USE_SESSION_KEY"
-    unsigned long _ASC_REQ_SESSION_TICKET "ASC_REQ_SESSION_TICKET"
-    unsigned long _ASC_REQ_ALLOCATE_MEMORY "ASC_REQ_ALLOCATE_MEMORY"
-    unsigned long _ASC_REQ_USE_DCE_STYLE "ASC_REQ_USE_DCE_STYLE"
-    unsigned long _ASC_REQ_DATAGRAM "ASC_REQ_DATAGRAM"
-    unsigned long _ASC_REQ_CONNECTION "ASC_REQ_CONNECTION"
-    unsigned long _ASC_REQ_CALL_LEVEL "ASC_REQ_CALL_LEVEL"
-    unsigned long _ASC_REQ_FRAGMENT_SUPPLIED "ASC_REQ_FRAGMENT_SUPPLIED"
-    unsigned long _ASC_REQ_EXTENDED_ERROR "ASC_REQ_EXTENDED_ERROR"
-    unsigned long _ASC_REQ_STREAM "ASC_REQ_STREAM"
-    unsigned long _ASC_REQ_INTEGRITY "ASC_REQ_INTEGRITY"
-    unsigned long _ASC_REQ_LICENSING "ASC_REQ_LICENSING"
-    unsigned long _ASC_REQ_IDENTIFY "ASC_REQ_IDENTIFY"
-    unsigned long _ASC_REQ_ALLOW_NULL_SESSION "ASC_REQ_ALLOW_NULL_SESSION"
-    unsigned long _ASC_REQ_ALLOW_NON_USER_LOGONS "ASC_REQ_ALLOW_NON_USER_LOGONS"
-    unsigned long _ASC_REQ_ALLOW_CONTEXT_REPLAY "ASC_REQ_ALLOW_CONTEXT_REPLAY"
-    unsigned long _ASC_REQ_FRAGMENT_TO_FIT "ASC_REQ_FRAGMENT_TO_FIT"
-    unsigned long _ASC_REQ_NO_TOKEN "ASC_REQ_NO_TOKEN"
-    unsigned long _ASC_REQ_PROXY_BINDINGS "ASC_REQ_PROXY_BINDINGS"
-    unsigned long _ASC_REQ_ALLOW_MISSING_BINDINGS "ASC_REQ_ALLOW_MISSING_BINDINGS"
+    unsigned int _ASC_REQ_DELEGATE "ASC_REQ_DELEGATE"
+    unsigned int _ASC_REQ_MUTUAL_AUTH "ASC_REQ_MUTUAL_AUTH"
+    unsigned int _ASC_REQ_REPLAY_DETECT "ASC_REQ_REPLAY_DETECT"
+    unsigned int _ASC_REQ_SEQUENCE_DETECT "ASC_REQ_SEQUENCE_DETECT"
+    unsigned int _ASC_REQ_CONFIDENTIALITY "ASC_REQ_CONFIDENTIALITY"
+    unsigned int _ASC_REQ_USE_SESSION_KEY "ASC_REQ_USE_SESSION_KEY"
+    unsigned int _ASC_REQ_SESSION_TICKET "ASC_REQ_SESSION_TICKET"
+    unsigned int _ASC_REQ_ALLOCATE_MEMORY "ASC_REQ_ALLOCATE_MEMORY"
+    unsigned int _ASC_REQ_USE_DCE_STYLE "ASC_REQ_USE_DCE_STYLE"
+    unsigned int _ASC_REQ_DATAGRAM "ASC_REQ_DATAGRAM"
+    unsigned int _ASC_REQ_CONNECTION "ASC_REQ_CONNECTION"
+    unsigned int _ASC_REQ_CALL_LEVEL "ASC_REQ_CALL_LEVEL"
+    unsigned int _ASC_REQ_FRAGMENT_SUPPLIED "ASC_REQ_FRAGMENT_SUPPLIED"
+    unsigned int _ASC_REQ_EXTENDED_ERROR "ASC_REQ_EXTENDED_ERROR"
+    unsigned int _ASC_REQ_STREAM "ASC_REQ_STREAM"
+    unsigned int _ASC_REQ_INTEGRITY "ASC_REQ_INTEGRITY"
+    unsigned int _ASC_REQ_LICENSING "ASC_REQ_LICENSING"
+    unsigned int _ASC_REQ_IDENTIFY "ASC_REQ_IDENTIFY"
+    unsigned int _ASC_REQ_ALLOW_NULL_SESSION "ASC_REQ_ALLOW_NULL_SESSION"
+    unsigned int _ASC_REQ_ALLOW_NON_USER_LOGONS "ASC_REQ_ALLOW_NON_USER_LOGONS"
+    unsigned int _ASC_REQ_ALLOW_CONTEXT_REPLAY "ASC_REQ_ALLOW_CONTEXT_REPLAY"
+    unsigned int _ASC_REQ_FRAGMENT_TO_FIT "ASC_REQ_FRAGMENT_TO_FIT"
+    unsigned int _ASC_REQ_NO_TOKEN "ASC_REQ_NO_TOKEN"
+    unsigned int _ASC_REQ_PROXY_BINDINGS "ASC_REQ_PROXY_BINDINGS"
+    unsigned int _ASC_REQ_ALLOW_MISSING_BINDINGS "ASC_REQ_ALLOW_MISSING_BINDINGS"
 
-    unsigned long _ASC_RET_DELEGATE "ASC_RET_DELEGATE"
-    unsigned long _ASC_RET_MUTUAL_AUTH "ASC_RET_MUTUAL_AUTH"
-    unsigned long _ASC_RET_REPLAY_DETECT "ASC_RET_REPLAY_DETECT"
-    unsigned long _ASC_RET_SEQUENCE_DETECT "ASC_RET_SEQUENCE_DETECT"
-    unsigned long _ASC_RET_CONFIDENTIALITY "ASC_RET_CONFIDENTIALITY"
-    unsigned long _ASC_RET_USE_SESSION_KEY "ASC_RET_USE_SESSION_KEY"
-    unsigned long _ASC_RET_SESSION_TICKET "ASC_RET_SESSION_TICKET"
-    unsigned long _ASC_RET_ALLOCATED_MEMORY "ASC_RET_ALLOCATED_MEMORY"
-    unsigned long _ASC_RET_USED_DCE_STYLE "ASC_RET_USED_DCE_STYLE"
-    unsigned long _ASC_RET_DATAGRAM "ASC_RET_DATAGRAM"
-    unsigned long _ASC_RET_CONNECTION "ASC_RET_CONNECTION"
-    unsigned long _ASC_RET_CALL_LEVEL "ASC_RET_CALL_LEVEL"
-    unsigned long _ASC_RET_THIRD_LEG_FAILED "ASC_RET_THIRD_LEG_FAILED"
-    unsigned long _ASC_RET_EXTENDED_ERROR "ASC_RET_EXTENDED_ERROR"
-    unsigned long _ASC_RET_STREAM "ASC_RET_STREAM"
-    unsigned long _ASC_RET_INTEGRITY "ASC_RET_INTEGRITY"
-    unsigned long _ASC_RET_LICENSING "ASC_RET_LICENSING"
-    unsigned long _ASC_RET_IDENTIFY "ASC_RET_IDENTIFY"
-    unsigned long _ASC_RET_NULL_SESSION "ASC_RET_NULL_SESSION"
-    unsigned long _ASC_RET_ALLOW_NON_USER_LOGONS "ASC_RET_ALLOW_NON_USER_LOGONS"
-    unsigned long _ASC_RET_ALLOW_CONTEXT_REPLAY "ASC_RET_ALLOW_CONTEXT_REPLAY"
-    unsigned long _ASC_RET_FRAGMENT_ONLY "ASC_RET_FRAGMENT_ONLY"
-    unsigned long _ASC_RET_NO_TOKEN "ASC_RET_NO_TOKEN"
-    unsigned long _ASC_RET_NO_ADDITIONAL_TOKEN "ASC_RET_NO_ADDITIONAL_TOKEN"
+    unsigned int _ASC_RET_DELEGATE "ASC_RET_DELEGATE"
+    unsigned int _ASC_RET_MUTUAL_AUTH "ASC_RET_MUTUAL_AUTH"
+    unsigned int _ASC_RET_REPLAY_DETECT "ASC_RET_REPLAY_DETECT"
+    unsigned int _ASC_RET_SEQUENCE_DETECT "ASC_RET_SEQUENCE_DETECT"
+    unsigned int _ASC_RET_CONFIDENTIALITY "ASC_RET_CONFIDENTIALITY"
+    unsigned int _ASC_RET_USE_SESSION_KEY "ASC_RET_USE_SESSION_KEY"
+    unsigned int _ASC_RET_SESSION_TICKET "ASC_RET_SESSION_TICKET"
+    unsigned int _ASC_RET_ALLOCATED_MEMORY "ASC_RET_ALLOCATED_MEMORY"
+    unsigned int _ASC_RET_USED_DCE_STYLE "ASC_RET_USED_DCE_STYLE"
+    unsigned int _ASC_RET_DATAGRAM "ASC_RET_DATAGRAM"
+    unsigned int _ASC_RET_CONNECTION "ASC_RET_CONNECTION"
+    unsigned int _ASC_RET_CALL_LEVEL "ASC_RET_CALL_LEVEL"
+    unsigned int _ASC_RET_THIRD_LEG_FAILED "ASC_RET_THIRD_LEG_FAILED"
+    unsigned int _ASC_RET_EXTENDED_ERROR "ASC_RET_EXTENDED_ERROR"
+    unsigned int _ASC_RET_STREAM "ASC_RET_STREAM"
+    unsigned int _ASC_RET_INTEGRITY "ASC_RET_INTEGRITY"
+    unsigned int _ASC_RET_LICENSING "ASC_RET_LICENSING"
+    unsigned int _ASC_RET_IDENTIFY "ASC_RET_IDENTIFY"
+    unsigned int _ASC_RET_NULL_SESSION "ASC_RET_NULL_SESSION"
+    unsigned int _ASC_RET_ALLOW_NON_USER_LOGONS "ASC_RET_ALLOW_NON_USER_LOGONS"
+    unsigned int _ASC_RET_ALLOW_CONTEXT_REPLAY "ASC_RET_ALLOW_CONTEXT_REPLAY"
+    unsigned int _ASC_RET_FRAGMENT_ONLY "ASC_RET_FRAGMENT_ONLY"
+    unsigned int _ASC_RET_NO_TOKEN "ASC_RET_NO_TOKEN"
+    unsigned int _ASC_RET_NO_ADDITIONAL_TOKEN "ASC_RET_NO_ADDITIONAL_TOKEN"
 
-    unsigned long _ISC_REQ_DELEGATE "ISC_REQ_DELEGATE"
-    unsigned long _ISC_REQ_MUTUAL_AUTH "ISC_REQ_MUTUAL_AUTH"
-    unsigned long _ISC_REQ_REPLAY_DETECT "ISC_REQ_REPLAY_DETECT"
-    unsigned long _ISC_REQ_SEQUENCE_DETECT "ISC_REQ_SEQUENCE_DETECT"
-    unsigned long _ISC_REQ_CONFIDENTIALITY "ISC_REQ_CONFIDENTIALITY"
-    unsigned long _ISC_REQ_USE_SESSION_KEY "ISC_REQ_USE_SESSION_KEY"
-    unsigned long _ISC_REQ_PROMPT_FOR_CREDS "ISC_REQ_PROMPT_FOR_CREDS"
-    unsigned long _ISC_REQ_USE_SUPPLIED_CREDS "ISC_REQ_USE_SUPPLIED_CREDS"
-    unsigned long _ISC_REQ_ALLOCATE_MEMORY "ISC_REQ_ALLOCATE_MEMORY"
-    unsigned long _ISC_REQ_USE_DCE_STYLE "ISC_REQ_USE_DCE_STYLE"
-    unsigned long _ISC_REQ_DATAGRAM "ISC_REQ_DATAGRAM"
-    unsigned long _ISC_REQ_CONNECTION "ISC_REQ_CONNECTION"
-    unsigned long _ISC_REQ_CALL_LEVEL "ISC_REQ_CALL_LEVEL"
-    unsigned long _ISC_REQ_FRAGMENT_SUPPLIED "ISC_REQ_FRAGMENT_SUPPLIED"
-    unsigned long _ISC_REQ_EXTENDED_ERROR "ISC_REQ_EXTENDED_ERROR"
-    unsigned long _ISC_REQ_STREAM "ISC_REQ_STREAM"
-    unsigned long _ISC_REQ_INTEGRITY "ISC_REQ_INTEGRITY"
-    unsigned long _ISC_REQ_IDENTIFY "ISC_REQ_IDENTIFY"
-    unsigned long _ISC_REQ_NULL_SESSION "ISC_REQ_NULL_SESSION"
-    unsigned long _ISC_REQ_MANUAL_CRED_VALIDATION "ISC_REQ_MANUAL_CRED_VALIDATION"
-    unsigned long _ISC_REQ_RESERVED1 "ISC_REQ_RESERVED1"
-    unsigned long _ISC_REQ_FRAGMENT_TO_FIT "ISC_REQ_FRAGMENT_TO_FIT"
-    unsigned long _ISC_REQ_FORWARD_CREDENTIALS "ISC_REQ_FORWARD_CREDENTIALS"
-    unsigned long _ISC_REQ_NO_INTEGRITY "ISC_REQ_NO_INTEGRITY"
-    unsigned long _ISC_REQ_USE_HTTP_STYLE "ISC_REQ_USE_HTTP_STYLE"
-    unsigned long _ISC_REQ_UNVERIFIED_TARGET_NAME "ISC_REQ_UNVERIFIED_TARGET_NAME"
-    unsigned long _ISC_REQ_CONFIDENTIALITY_ONLY "ISC_REQ_CONFIDENTIALITY_ONLY"
+    unsigned int _ISC_REQ_DELEGATE "ISC_REQ_DELEGATE"
+    unsigned int _ISC_REQ_MUTUAL_AUTH "ISC_REQ_MUTUAL_AUTH"
+    unsigned int _ISC_REQ_REPLAY_DETECT "ISC_REQ_REPLAY_DETECT"
+    unsigned int _ISC_REQ_SEQUENCE_DETECT "ISC_REQ_SEQUENCE_DETECT"
+    unsigned int _ISC_REQ_CONFIDENTIALITY "ISC_REQ_CONFIDENTIALITY"
+    unsigned int _ISC_REQ_USE_SESSION_KEY "ISC_REQ_USE_SESSION_KEY"
+    unsigned int _ISC_REQ_PROMPT_FOR_CREDS "ISC_REQ_PROMPT_FOR_CREDS"
+    unsigned int _ISC_REQ_USE_SUPPLIED_CREDS "ISC_REQ_USE_SUPPLIED_CREDS"
+    unsigned int _ISC_REQ_ALLOCATE_MEMORY "ISC_REQ_ALLOCATE_MEMORY"
+    unsigned int _ISC_REQ_USE_DCE_STYLE "ISC_REQ_USE_DCE_STYLE"
+    unsigned int _ISC_REQ_DATAGRAM "ISC_REQ_DATAGRAM"
+    unsigned int _ISC_REQ_CONNECTION "ISC_REQ_CONNECTION"
+    unsigned int _ISC_REQ_CALL_LEVEL "ISC_REQ_CALL_LEVEL"
+    unsigned int _ISC_REQ_FRAGMENT_SUPPLIED "ISC_REQ_FRAGMENT_SUPPLIED"
+    unsigned int _ISC_REQ_EXTENDED_ERROR "ISC_REQ_EXTENDED_ERROR"
+    unsigned int _ISC_REQ_STREAM "ISC_REQ_STREAM"
+    unsigned int _ISC_REQ_INTEGRITY "ISC_REQ_INTEGRITY"
+    unsigned int _ISC_REQ_IDENTIFY "ISC_REQ_IDENTIFY"
+    unsigned int _ISC_REQ_NULL_SESSION "ISC_REQ_NULL_SESSION"
+    unsigned int _ISC_REQ_MANUAL_CRED_VALIDATION "ISC_REQ_MANUAL_CRED_VALIDATION"
+    unsigned int _ISC_REQ_RESERVED1 "ISC_REQ_RESERVED1"
+    unsigned int _ISC_REQ_FRAGMENT_TO_FIT "ISC_REQ_FRAGMENT_TO_FIT"
+    unsigned int _ISC_REQ_FORWARD_CREDENTIALS "ISC_REQ_FORWARD_CREDENTIALS"
+    unsigned int _ISC_REQ_NO_INTEGRITY "ISC_REQ_NO_INTEGRITY"
+    unsigned int _ISC_REQ_USE_HTTP_STYLE "ISC_REQ_USE_HTTP_STYLE"
+    unsigned int _ISC_REQ_UNVERIFIED_TARGET_NAME "ISC_REQ_UNVERIFIED_TARGET_NAME"
+    unsigned int _ISC_REQ_CONFIDENTIALITY_ONLY "ISC_REQ_CONFIDENTIALITY_ONLY"
 
-    unsigned long _ISC_RET_DELEGATE "ISC_RET_DELEGATE"
-    unsigned long _ISC_RET_MUTUAL_AUTH "ISC_RET_MUTUAL_AUTH"
-    unsigned long _ISC_RET_REPLAY_DETECT "ISC_RET_REPLAY_DETECT"
-    unsigned long _ISC_RET_SEQUENCE_DETECT "ISC_RET_SEQUENCE_DETECT"
-    unsigned long _ISC_RET_CONFIDENTIALITY "ISC_RET_CONFIDENTIALITY"
-    unsigned long _ISC_RET_USE_SESSION_KEY "ISC_RET_USE_SESSION_KEY"
-    unsigned long _ISC_RET_USED_COLLECTED_CREDS "ISC_RET_USED_COLLECTED_CREDS"
-    unsigned long _ISC_RET_USED_SUPPLIED_CREDS "ISC_RET_USED_SUPPLIED_CREDS"
-    unsigned long _ISC_RET_ALLOCATED_MEMORY "ISC_RET_ALLOCATED_MEMORY"
-    unsigned long _ISC_RET_USED_DCE_STYLE "ISC_RET_USED_DCE_STYLE"
-    unsigned long _ISC_RET_DATAGRAM "ISC_RET_DATAGRAM"
-    unsigned long _ISC_RET_CONNECTION "ISC_RET_CONNECTION"
-    unsigned long _ISC_RET_INTERMEDIATE_RETURN "ISC_RET_INTERMEDIATE_RETURN"
-    unsigned long _ISC_RET_CALL_LEVEL "ISC_RET_CALL_LEVEL"
-    unsigned long _ISC_RET_EXTENDED_ERROR "ISC_RET_EXTENDED_ERROR"
-    unsigned long _ISC_RET_STREAM "ISC_RET_STREAM"
-    unsigned long _ISC_RET_INTEGRITY "ISC_RET_INTEGRITY"
-    unsigned long _ISC_RET_IDENTIFY "ISC_RET_IDENTIFY"
-    unsigned long _ISC_RET_NULL_SESSION "ISC_RET_NULL_SESSION"
-    unsigned long _ISC_RET_MANUAL_CRED_VALIDATION "ISC_RET_MANUAL_CRED_VALIDATION"
-    unsigned long _ISC_RET_RESERVED1 "ISC_RET_RESERVED1"
-    unsigned long _ISC_RET_FRAGMENT_ONLY "ISC_RET_FRAGMENT_ONLY"
-    unsigned long _ISC_RET_FORWARD_CREDENTIALS "ISC_RET_FORWARD_CREDENTIALS"
-    unsigned long _ISC_RET_USED_HTTP_STYLE "ISC_RET_USED_HTTP_STYLE"
-    unsigned long _ISC_RET_NO_ADDITIONAL_TOKEN "ISC_RET_NO_ADDITIONAL_TOKEN"
-    unsigned long _ISC_RET_REAUTHENTICATION "ISC_RET_REAUTHENTICATION"
-    unsigned long _ISC_RET_CONFIDENTIALITY_ONLY "ISC_RET_CONFIDENTIALITY_ONLY"
+    unsigned int _ISC_RET_DELEGATE "ISC_RET_DELEGATE"
+    unsigned int _ISC_RET_MUTUAL_AUTH "ISC_RET_MUTUAL_AUTH"
+    unsigned int _ISC_RET_REPLAY_DETECT "ISC_RET_REPLAY_DETECT"
+    unsigned int _ISC_RET_SEQUENCE_DETECT "ISC_RET_SEQUENCE_DETECT"
+    unsigned int _ISC_RET_CONFIDENTIALITY "ISC_RET_CONFIDENTIALITY"
+    unsigned int _ISC_RET_USE_SESSION_KEY "ISC_RET_USE_SESSION_KEY"
+    unsigned int _ISC_RET_USED_COLLECTED_CREDS "ISC_RET_USED_COLLECTED_CREDS"
+    unsigned int _ISC_RET_USED_SUPPLIED_CREDS "ISC_RET_USED_SUPPLIED_CREDS"
+    unsigned int _ISC_RET_ALLOCATED_MEMORY "ISC_RET_ALLOCATED_MEMORY"
+    unsigned int _ISC_RET_USED_DCE_STYLE "ISC_RET_USED_DCE_STYLE"
+    unsigned int _ISC_RET_DATAGRAM "ISC_RET_DATAGRAM"
+    unsigned int _ISC_RET_CONNECTION "ISC_RET_CONNECTION"
+    unsigned int _ISC_RET_INTERMEDIATE_RETURN "ISC_RET_INTERMEDIATE_RETURN"
+    unsigned int _ISC_RET_CALL_LEVEL "ISC_RET_CALL_LEVEL"
+    unsigned int _ISC_RET_EXTENDED_ERROR "ISC_RET_EXTENDED_ERROR"
+    unsigned int _ISC_RET_STREAM "ISC_RET_STREAM"
+    unsigned int _ISC_RET_INTEGRITY "ISC_RET_INTEGRITY"
+    unsigned int _ISC_RET_IDENTIFY "ISC_RET_IDENTIFY"
+    unsigned int _ISC_RET_NULL_SESSION "ISC_RET_NULL_SESSION"
+    unsigned int _ISC_RET_MANUAL_CRED_VALIDATION "ISC_RET_MANUAL_CRED_VALIDATION"
+    unsigned int _ISC_RET_RESERVED1 "ISC_RET_RESERVED1"
+    unsigned int _ISC_RET_FRAGMENT_ONLY "ISC_RET_FRAGMENT_ONLY"
+    unsigned int _ISC_RET_FORWARD_CREDENTIALS "ISC_RET_FORWARD_CREDENTIALS"
+    unsigned int _ISC_RET_USED_HTTP_STYLE "ISC_RET_USED_HTTP_STYLE"
+    unsigned int _ISC_RET_NO_ADDITIONAL_TOKEN "ISC_RET_NO_ADDITIONAL_TOKEN"
+    unsigned int _ISC_RET_REAUTHENTICATION "ISC_RET_REAUTHENTICATION"
+    unsigned int _ISC_RET_CONFIDENTIALITY_ONLY "ISC_RET_CONFIDENTIALITY_ONLY"
 
     # https://learn.microsoft.com/en-us/windows/win32/secauthn/acceptsecuritycontext--general
     SECURITY_STATUS AcceptSecurityContext(
         PCredHandle    phCredential,
         PCtxtHandle    phContext,
         PSecBufferDesc pInput,
-        unsigned long  fContextReq,
-        unsigned long  TargetDataRep,
+        unsigned int  fContextReq,
+        unsigned int  TargetDataRep,
         PCtxtHandle    phNewContext,
         PSecBufferDesc pOutput,
-        unsigned long  *pfContextAttr,
+        unsigned int  *pfContextAttr,
         PTimeStamp     ptsExpiry
     ) nogil
 
@@ -151,14 +151,14 @@ cdef extern from "Security.h":
         PCredHandle    phCredential,
         PCtxtHandle    phContext,
         LPWSTR         pTargetName,
-        unsigned long  fContextReq,
-        unsigned long  Reserved1,
-        unsigned long  TargetDataRep,
+        unsigned int  fContextReq,
+        unsigned int  Reserved1,
+        unsigned int  TargetDataRep,
         PSecBufferDesc pInput,
-        unsigned long  Reserved2,
+        unsigned int  Reserved2,
         PCtxtHandle    phNewContext,
         PSecBufferDesc pOutput,
-        unsigned long  *pfContextAttr,
+        unsigned int  *pfContextAttr,
         PTimeStamp     ptsExpiry
     ) nogil
 
@@ -294,17 +294,17 @@ cdef class SecurityContext:
 
     @property
     def expiry(SecurityContext self) -> int:
-        return (<unsigned long long>self.raw_expiry.HighPart << 32) | self.raw_expiry.LowPart
+        return (<uint64_t>self.raw_expiry.HighPart << 32) | self.raw_expiry.LowPart
 
 cdef class AcceptorSecurityContext(SecurityContext):
-    cdef unsigned long raw_context_attr
+    cdef unsigned int raw_context_attr
 
     @property
     def context_attr(AcceptorSecurityContext self) -> AscRet:
         return AscRet(self.raw_context_attr)
 
 cdef class InitiatorSecurityContext(SecurityContext):
-    cdef unsigned long raw_context_attr
+    cdef unsigned int raw_context_attr
 
     @property
     def context_attr(InitiatorSecurityContext self) -> IscRet:
@@ -324,8 +324,8 @@ def accept_security_context(
     Credential credential,
     AcceptorSecurityContext context,
     SecBufferDesc input_buffers,
-    unsigned long context_req,
-    unsigned long target_data_rep,
+    unsigned int context_req,
+    unsigned int target_data_rep,
     SecBufferDesc output_buffers,
 ) -> AcceptContextResult:
     cdef PCredHandle cred_handle = NULL
@@ -397,8 +397,8 @@ def initialize_security_context(
     Credential credential,
     InitiatorSecurityContext context,
     str target_name not None,
-    unsigned long context_req,
-    unsigned long target_data_rep,
+    unsigned int context_req,
+    unsigned int target_data_rep,
     SecBufferDesc input_buffers,
     SecBufferDesc output_buffers,
 ) -> InitializeContextResult:

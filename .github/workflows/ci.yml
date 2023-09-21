@@ -44,19 +44,30 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os:
-        - windows-2022
-        version:
-        - cp38-win_amd64
-        - cp38-win32
-        - cp39-win_amd64
-        - cp39-win32
-        - cp310-win_amd64
-        - cp310-win32
-        - cp311-win_amd64
-        - cp311-win32
-        - cp312-win_amd64
-        - cp312-win32
+        include:
+        - os: ubuntu-latest
+          version: cp*-manylinux_x86_64
+
+        - os: windows-2022
+          version: cp38-win_amd64
+        - os: windows-2022
+          version: cp38-win32
+        - os: windows-2022
+          version: cp39-win_amd64
+        - os: windows-2022
+          version: cp39-win32
+        - os: windows-2022
+          version: cp310-win_amd64
+        - os: windows-2022
+          version: cp310-win32
+        - os: windows-2022
+          version: cp311-win_amd64
+        - os: windows-2022
+          version: cp311-win32
+        - os: windows-2022
+          version: cp312-win_amd64
+        - os: windows-2022
+          version: cp312-win32
 
     steps:
     - uses: actions/download-artifact@v3
@@ -73,7 +84,7 @@ jobs:
         rm sspi-*.tar.gz
 
     - name: build wheel
-      uses: pypa/cibuildwheel@v2.15.0
+      uses: pypa/cibuildwheel@v2.16.0
       env:
         CIBW_ARCHS: all
         CIBW_BUILD: ${{ matrix.version }}
@@ -96,16 +107,21 @@ jobs:
       fail-fast: false
       matrix:
         os:
+        - ubuntu-latest
         - windows-latest
         python-version:
         - 3.8
         - 3.9
         - '3.10'
         - '3.11'
-        - '3.12.0-rc.1'
+        - '3.12.0-rc.3'
         python-arch:
         - x86
         - x64
+
+        exclude:
+        - os: ubuntu-latest
+          python-arch: x86
 
     steps:
     - uses: actions/checkout@v3

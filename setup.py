@@ -9,6 +9,7 @@ import ctypes
 import ctypes.util
 import os
 import pathlib
+import platform
 import typing
 
 from Cython.Build import cythonize
@@ -17,6 +18,7 @@ from setuptools import Extension, setup
 SKIP_EXTENSIONS = os.environ.get("SSPI_SKIP_EXTENSIONS", "false").lower() == "true"
 SKIP_MODULE_CHECK = os.environ.get("SSPI_SKIP_MODULE_CHECK", "false").lower() == "true"
 CYTHON_LINETRACE = os.environ.get("SSPI_CYTHON_TRACING", "false").lower() == "true"
+SSPI_MAIN_LIB = os.environ.get("SSPI_MAIN_LIB", None)
 
 
 def make_extension(
@@ -44,9 +46,33 @@ def make_extension(
 
 raw_extensions = []
 if not SKIP_EXTENSIONS:
-    sspi_path = pathlib.Path(os.environ.get("SystemRoot", r"C:\Windows")) / "System32" / "Secur32.dll"
+    if os.name == "nt":
+        windir = pathlib.Path(os.environ.get("SystemRoot", r"C:\Windows"))
+        sspi_path = str((windir / "System32" / "Secur32.dll").absolute())
+
+        define_macros = [
+            ("UNICODE", "1"),
+            ("_UNICODE", "1"),
+            ("SECURITY_WIN32", "1"),
+        ]
+        extra_compile_args = []
+        sspi_lib = "Secur32"
+        text_libs = []
+
+    else:
+        ext = "dylib" if platform.system() == "Darwin" else "so"
+        sspi_path = f"libsspi.{ext}"
+
+        define_macros = []
+        extra_compile_args = ["-DPYSSPI_IS_LINUX"]
+        sspi_lib = "sspi"
+        text_libs = ["icuio"]
+
+    if SSPI_MAIN_LIB:
+        sspi_path = SSPI_MAIN_LIB
+
     print(f"Using {sspi_path} as SSPI module for platform checks")
-    sspi = ctypes.CDLL(str(sspi_path.absolute()))
+    sspi = ctypes.CDLL(sspi_path)
 
     for e in [
         "context_attributes",
@@ -57,15 +83,15 @@ if not SKIP_EXTENSIONS:
         "security_buffer",
         "security_context",
         "security_package",
-        "text",
+        ("text", text_libs),
     ]:
         name = e
-        libraries = ["Secur32"]
+        libraries = [sspi_lib]
         canary = None
         if isinstance(e, tuple):
             name = e[0]
             if len(e) > 1:
-                libraries = e[1]
+                libraries.extend(e[1])
             if len(e) > 2:
                 canary = e[2]
 
@@ -73,12 +99,9 @@ if not SKIP_EXTENSIONS:
             f"sspi._{name}",
             module=sspi,
             canary=canary,
+            extra_compile_args=extra_compile_args,
             libraries=libraries,
-            define_macros=[
-                ("UNICODE", "1"),
-                ("_UNICODE", "1"),
-                ("SECURITY_WIN32", "1"),
-            ],
+            define_macros=define_macros,
         )
         if ext:
             raw_extensions.append(ext)

@@ -6,12 +6,12 @@ from __future__ import annotations
 from sspi._win32_types cimport *
 
 
-cdef extern from "Security.h":
+cdef extern from "python_sspi.h":
     cdef struct _SecPkgInfoW:
-        unsigned long fCapabilities
+        unsigned int fCapabilities
         unsigned short wVersion
         unsigned short wRPCID
-        unsigned long cbMaxToken
+        unsigned int cbMaxToken
         SEC_WCHAR *Name
         SEC_WCHAR *Comment
     ctypedef _SecPkgInfoW SecPkgInfoW

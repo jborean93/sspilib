@@ -3,9 +3,15 @@
 
 from __future__ import annotations
 
+import os
+
+import pytest
+
 import sspi
 
 
+# https://github.com/Devolutions/sspi-rs/issues/169
+@pytest.mark.skipif(os.name != "nt", reason="SECPKG_ATTR_NAMES is not implemented in sspi-rs")
 def test_query_names(
     authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
 ) -> None:
@@ -51,6 +57,8 @@ def test_query_package_info(
     assert repr(c_actual) == repr(s_actual)
 
 
+# https://github.com/Devolutions/sspi-rs/issues/168
+@pytest.mark.skipif(os.name != "nt", reason="SECPKG_ATTR_SESSION_KEY is not implemented in sspi-rs")
 def test_query_session_keys(
     authenticated_contexts: tuple[sspi.InitiatorSecurityContext, sspi.AcceptorSecurityContext],
 ) -> None:
