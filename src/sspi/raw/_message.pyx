@@ -5,9 +5,9 @@ from __future__ import annotations
 
 import enum
 
-from sspi._security_buffer cimport PSecBufferDesc, SecBufferDesc
-from sspi._security_context cimport SecurityContext
-from sspi._win32_types cimport *
+from ._security_buffer cimport PSecBufferDesc, SecBufferDesc
+from ._security_context cimport CtxtHandle
+from ._win32_types cimport *
 
 
 cdef extern from "python_sspi.h":
@@ -55,7 +55,7 @@ class QopFlags(enum.IntFlag):
     SECQOP_WRAP_OOB_DATA = _SECQOP_WRAP_OOB_DATA
 
 def decrypt_message(
-    SecurityContext context not None,
+    CtxtHandle context not None,
     SecBufferDesc message not None,
     unsigned int seq_no,
 ) -> int:
@@ -76,7 +76,7 @@ def decrypt_message(
     return qop
 
 def encrypt_message(
-    SecurityContext context not None,
+    CtxtHandle context not None,
     unsigned int qop,
     SecBufferDesc message not None,
     unsigned int seq_no,
@@ -95,7 +95,7 @@ def encrypt_message(
     message.sync_buffers()
 
 def make_signature(
-    SecurityContext context not None,
+    CtxtHandle context not None,
     unsigned int qop,
     SecBufferDesc message not None,
     unsigned int seq_no,
@@ -114,7 +114,7 @@ def make_signature(
     message.sync_buffers()
 
 def verify_signature(
-    SecurityContext context not None,
+    CtxtHandle context not None,
     SecBufferDesc message not None,
     unsigned int seq_no,
 ) -> int:

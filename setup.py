@@ -96,7 +96,7 @@ if not SKIP_EXTENSIONS:
                 canary = e[2]
 
         ext = make_extension(
-            f"sspi._{name}",
+            f"sspi.raw._{name}",
             module=sspi,
             canary=canary,
             extra_compile_args=extra_compile_args,

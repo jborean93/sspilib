@@ -4,7 +4,7 @@
 import enum
 
 from ._security_buffer import SecBufferDesc
-from ._security_context import SecurityContext
+from ._security_context import CtxtHandle
 
 class QopFlags(enum.IntFlag):
     """Quality of Protection flags for :meth:`encrypt_message`."""
@@ -23,7 +23,7 @@ class QopFlags(enum.IntFlag):
     """Send an Schannel alert message."""
 
 def decrypt_message(
-    context: SecurityContext,
+    context: CtxtHandle,
     message: SecBufferDesc,
     seq_no: int,
 ) -> int:
@@ -55,7 +55,7 @@ def decrypt_message(
     """
 
 def encrypt_message(
-    context: SecurityContext,
+    context: CtxtHandle,
     qop: QopFlags | int,
     message: SecBufferDesc,
     seq_no: int,
@@ -86,7 +86,7 @@ def encrypt_message(
     """
 
 def make_signature(
-    context: SecurityContext,
+    context: CtxtHandle,
     qop: QopFlags | int,
     message: SecBufferDesc,
     seq_no: int,
@@ -113,7 +113,7 @@ def make_signature(
     """
 
 def verify_signature(
-    context: SecurityContext,
+    context: CtxtHandle,
     message: SecBufferDesc,
     seq_no: int,
 ) -> int:

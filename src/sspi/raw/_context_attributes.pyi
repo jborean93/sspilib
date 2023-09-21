@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import typing as t
 
-from ._security_context import SecurityContext
+from ._security_context import CtxtHandle
 from ._security_package import SecurityPackageCapability
 
 T = t.TypeVar("T", bound=SecPkgContext)
@@ -103,7 +103,7 @@ class SecPkgContextSizes(SecPkgContext):
         """Size of the security trailer appended to messages."""
 
 def query_context_attributes(
-    context: SecurityContext,
+    context: CtxtHandle,
     attribute: type[T],
 ) -> T:
     """Queries an attribute of a security context.

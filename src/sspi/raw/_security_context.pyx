@@ -8,12 +8,12 @@ import enum
 
 from libc.stdint cimport uint64_t
 
-from sspi._credential cimport Credential
-from sspi._security_buffer cimport PSecBufferDesc, SecBufferDesc
-from sspi._text cimport WideCharString
-from sspi._win32_types cimport *
+from ._credential cimport CredHandle
+from ._security_buffer cimport PSecBufferDesc, SecBufferDesc
+from ._text cimport WideCharString
+from ._win32_types cimport *
 
-from sspi._ntstatus import NtStatus
+from ._ntstatus import NtStatus
 
 
 cdef extern from "python_sspi.h":
@@ -282,47 +282,28 @@ class IscRet(enum.IntFlag):
     ISC_RET_REAUTHENTICATION = _ISC_RET_REAUTHENTICATION
     ISC_RET_CONFIDENTIALITY_ONLY = _ISC_RET_CONFIDENTIALITY_ONLY
 
-cdef class SecurityContext:
-    # cdef CtxtHandle raw
-    # cdef TimeStamp raw_expiry
+cdef class CtxtHandle:
+    # cdef _CtxtHandle raw
     # cdef int _needs_free
 
-    def __dealloc__(SecurityContext self):
+    def __dealloc__(CtxtHandle self):
         if self._needs_free:
             DeleteSecurityContext(&self.raw)
             self._needs_free = 0
 
-    @property
-    def expiry(SecurityContext self) -> int:
-        return (<uint64_t>self.raw_expiry.HighPart << 32) | self.raw_expiry.LowPart
-
-cdef class AcceptorSecurityContext(SecurityContext):
-    cdef unsigned int raw_context_attr
-
-    @property
-    def context_attr(AcceptorSecurityContext self) -> AscRet:
-        return AscRet(self.raw_context_attr)
-
-cdef class InitiatorSecurityContext(SecurityContext):
-    cdef unsigned int raw_context_attr
-
-    @property
-    def context_attr(InitiatorSecurityContext self) -> IscRet:
-        return IscRet(self.raw_context_attr)
-
 AcceptContextResult = collections.namedtuple(
     'AcceptContextResult',
-    ['context', 'result'],
+    ['context', 'attributes', 'expiry', 'status'],
 )
 
 InitializeContextResult = collections.namedtuple(
     'InitializeContextResult',
-    ['context', 'result'],
+    ['context', 'attributes', 'expiry', 'status'],
 )
 
 def accept_security_context(
-    Credential credential,
-    AcceptorSecurityContext context,
+    CredHandle credential,
+    CtxtHandle context,
     SecBufferDesc input_buffers,
     unsigned int context_req,
     unsigned int target_data_rep,
@@ -333,13 +314,13 @@ def accept_security_context(
         cred_handle = &credential.raw
 
     cdef PCtxtHandle in_context = NULL
-    cdef AcceptorSecurityContext out_context = None
-    if context:
+    cdef CtxtHandle out_context = None
+    if context and context._needs_free:
         in_context = &context.raw
         out_context = context
     else:
         in_context = NULL
-        out_context = AcceptorSecurityContext()
+        out_context = context or CtxtHandle()
 
     cdef PSecBufferDesc input_buffers_raw = NULL
     if input_buffers:
@@ -347,6 +328,9 @@ def accept_security_context(
     cdef PSecBufferDesc output_buffers_raw = NULL
     if output_buffers:
         output_buffers_raw = &output_buffers.raw
+
+    cdef unsigned int raw_context_attr
+    cdef TimeStamp raw_expiry
 
     with nogil:
         res = AcceptSecurityContext(
@@ -357,8 +341,8 @@ def accept_security_context(
             target_data_rep,
             &out_context.raw,
             output_buffers_raw,
-            &out_context.raw_context_attr,
-            &out_context.raw_expiry,
+            &raw_context_attr,
+            &raw_expiry,
         )
 
     if res not in [
@@ -377,11 +361,13 @@ def accept_security_context(
 
     return AcceptContextResult(
         context=out_context,
-        result=NtStatus(res),
+        attributes=AscRet(raw_context_attr),
+        expiry=(<uint64_t>raw_expiry.HighPart << 32) | raw_expiry.LowPart,
+        status=NtStatus(res),
     )
 
 def complete_auth_token(
-    SecurityContext context not None,
+    CtxtHandle context not None,
     SecBufferDesc token not None,
 ) -> None:
     with nogil:
@@ -394,8 +380,8 @@ def complete_auth_token(
         PyErr_SetFromWindowsErr(res)
 
 def initialize_security_context(
-    Credential credential,
-    InitiatorSecurityContext context,
+    CredHandle credential,
+    CtxtHandle context,
     str target_name not None,
     unsigned int context_req,
     unsigned int target_data_rep,
@@ -407,13 +393,13 @@ def initialize_security_context(
         cred_handle = &credential.raw
 
     cdef PCtxtHandle in_context = NULL
-    cdef InitiatorSecurityContext out_context = None
-    if context:
+    cdef CtxtHandle out_context = None
+    if context and context._needs_free:
         in_context = &context.raw
         out_context = context
     else:
         in_context = NULL
-        out_context = InitiatorSecurityContext()
+        out_context = context or CtxtHandle()
 
     cdef WideCharString target_name_wchar = WideCharString(target_name)
 
@@ -423,6 +409,9 @@ def initialize_security_context(
     cdef PSecBufferDesc output_buffers_raw = NULL
     if output_buffers:
         output_buffers_raw = &output_buffers.raw
+
+    cdef unsigned int raw_context_attr
+    cdef TimeStamp raw_expiry
 
     with nogil:
         res = InitializeSecurityContextW(
@@ -436,8 +425,8 @@ def initialize_security_context(
             0,
             &out_context.raw,
             output_buffers_raw,
-            &out_context.raw_context_attr,
-            &out_context.raw_expiry,
+            &raw_context_attr,
+            &raw_expiry,
         )
 
     if res not in [
@@ -456,5 +445,7 @@ def initialize_security_context(
 
     return InitializeContextResult(
         context=out_context,
-        result=NtStatus(res),
+        attributes=IscRet(raw_context_attr),
+        expiry=(<uint64_t>raw_expiry.HighPart << 32) | raw_expiry.LowPart,
+        status=NtStatus(res),
     )

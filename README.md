@@ -5,7 +5,8 @@
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jborean93/pysspi/blob/main/LICENSE)
 
 This library provides Python functions that wraps the Windows SSPI API.
-It is designed to be a low level interface that other libraries can easily leverage to use with SSPI integeration.
+It is designed to be both a high and low level interface that other libraries can easily leverage to use with SSPI integration.
+The high level interface is under the `sspi` namespace whereas the low-level interface is under the `sspi.raw` interface.
 
 ## Requirements
 
@@ -65,9 +66,9 @@ This library is merely a wrapper around the SSPI APIs.
 The functions under the `sspi` namespace expose the various SSPI functions under a more Pythonic snake_case format.
 For example the [AcquireCredentialsHandle](https://learn.microsoft.com/en-us/windows/win32/secauthn/acquirecredentialshandle--general) function is exposed as `sspi.acquire_credentials_handle`.
 
-Errors are raised as a `WinError` which contains the error message as formatted by Windows and the error code.
-Some of the objects and constants are exposed as Python clasess/dataclasses/enums for ease of use.
-Some functions expose buffers that contain dynamically allocated memory from SSPI if requested and need to be explicitly freed if needed.
+Errors are raised as a `WindowsError` which contains the error message as formatted by Windows and the error code.
+For Linux there is a compatible `sspi.WindowsError` class that is structured like the Windows only `WindowsError` builtin.
+Some of the objects and constants are exposed as Python classes/dataclasses/enums for ease of use.
 Please read through the docstring of the function that will be used to learn more about how to use them.
 
 ## Linux Support

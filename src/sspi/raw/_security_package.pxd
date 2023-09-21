@@ -3,7 +3,7 @@
 
 from __future__ import annotations
 
-from sspi._win32_types cimport *
+from ._win32_types cimport *
 
 
 cdef extern from "python_sspi.h":

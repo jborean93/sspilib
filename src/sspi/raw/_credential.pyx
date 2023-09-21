@@ -3,12 +3,13 @@
 
 from __future__ import annotations
 
+import collections
 import enum
 
 from libc.stdint cimport uint64_t
 
-from sspi._text cimport WideCharString, wide_char_to_str
-from sspi._win32_types cimport *
+from ._text cimport WideCharString, wide_char_to_str
+from ._win32_types cimport *
 
 
 cdef extern from "python_sspi.h":
@@ -96,19 +97,14 @@ class WinNTAuthFlags(enum.IntFlag):
     SEC_WINNT_AUTH_IDENTITY_FLAGS_NULL_DOMAIN = _SEC_WINNT_AUTH_IDENTITY_FLAGS_NULL_DOMAIN
     SEC_WINNT_AUTH_IDENTITY_FLAGS_ID_PROVIDER = _SEC_WINNT_AUTH_IDENTITY_FLAGS_ID_PROVIDER
 
-cdef class Credential:
-    # cdef CredHandle raw
-    # cdef TimeStamp raw_expiry
+cdef class CredHandle:
+    # cdef _CredHandle raw
     # cdef int needs_free
 
-    def __dealloc__(Credential self):
+    def __dealloc__(CredHandle self):
         if self.needs_free:
             FreeCredentialsHandle(&self.raw)
             self.needs_free = 0
-
-    @property
-    def expiry(Credential self) -> int:
-        return (<uint64_t>self.raw_expiry.HighPart << 32) | self.raw_expiry.LowPart
 
 cdef class AuthIdentity:
 
@@ -193,17 +189,23 @@ cdef class WinNTAuthIdentity(AuthIdentity):
     def package_list(self) -> str | None:
         return wide_char_to_str(<LPWSTR>self.raw.PackageList, self.raw.PackageListLength)
 
+AcquireCredentialsResult = collections.namedtuple(
+    'AcquireCredentialsResult',
+    ['credential', 'expiry'],
+)
+
 def acquire_credentials_handle(
     str principal,
     str package not None,
     unsigned int credential_use,
     *,
     AuthIdentity auth_data = None,
-) -> Credential:
-    cdef Credential cred = Credential()
+) -> AcquireCredentialsResult:
+    cdef CredHandle cred = CredHandle()
     cdef WideCharString principal_wstr = WideCharString(principal)
     cdef WideCharString package_wstr = WideCharString(package)
     cdef void *auth_data_buffer = NULL
+    cdef TimeStamp raw_expiry
 
     if auth_data is not None:
         auth_data_buffer = auth_data.__c_value__()
@@ -218,7 +220,7 @@ def acquire_credentials_handle(
             NULL,
             NULL,
             &cred.raw,
-            &cred.raw_expiry
+            &raw_expiry
         )
 
     if res != 0:
@@ -226,4 +228,17 @@ def acquire_credentials_handle(
 
     cred.needs_free = 1
 
-    return cred
+    return AcquireCredentialsResult(
+        credential=cred,
+        expiry=(<uint64_t>raw_expiry.HighPart << 32) | raw_expiry.LowPart,
+    )
+
+def _replace_cred_handle(
+    CredHandle src not None,
+    CredHandle dst not None,
+) -> None:
+    # This is only used by sspi._credential.py to store the cred state in
+    # itself.
+    dst.raw = src.raw
+    dst.needs_free = src.needs_free
+    src.needs_free = 0
