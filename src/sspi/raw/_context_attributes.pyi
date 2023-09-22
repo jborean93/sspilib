@@ -85,7 +85,7 @@ class SecPkgContextSizes(SecPkgContext):
 
     This wraps the `SecPkgContext_Sizes`_ Win32 structure.
 
-    .. _SecPkgContextSizes:
+    .. _SecPkgContext_Sizes:
         https://learn.microsoft.com/en-us/windows/win32/api/sspi/ns-sspi-secpkgcontext_sizes
     """
 

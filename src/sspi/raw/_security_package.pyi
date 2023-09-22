@@ -95,6 +95,6 @@ def enumerate_security_packages() -> list[SecPkgInfo]:
     Raises:
         WindowsError: If the function failed.
 
-    .. EnumerateSecurityPackages:
+    .. _EnumerateSecurityPackages:
         https://learn.microsoft.com/en-us/windows/win32/api/sspi/nf-sspi-enumeratesecuritypackagesw
     """

@@ -13,12 +13,20 @@ from ._filetime import filetime_to_datetime
 
 
 class UnwrapResult(t.NamedTuple):
+    """The result from :meth:`SecurityContext.unwrap`."""
+
     data: bytes
+    """The unwrapped data."""
     qop: int
+    """The Quality of Protection applied to the wrapped data."""
 
 
 class SecurityContext(raw.CtxtHandle, metaclass=abc.ABCMeta):
-    """Base class for a SecurityContext."""
+    """Base class for a SecurityContext.
+
+    This class should not be used directly, instead use
+    :class:`ClientSecurityContext` or :class:`ServerSecurityContext`.
+    """
 
     def __init__(
         self,
@@ -76,7 +84,7 @@ class SecurityContext(raw.CtxtHandle, metaclass=abc.ABCMeta):
 
         Raises:
             WindowsError: If the authentication step failed the WindowsError
-            contains more information around the failure.
+                contains more information around the failure.
         """
         sec_buffers = []
         if in_token:

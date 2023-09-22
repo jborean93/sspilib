@@ -1,0 +1,4 @@
+myst-parser  # For parsing markdown docs instead of rst
+sphinx-autoapi  # Reads the docstrings without importing the module
+Sphinx
+sphinx-rtd-theme  # Theme used
