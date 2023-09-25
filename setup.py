@@ -23,7 +23,7 @@ SSPI_MAIN_LIB = os.environ.get("SSPI_MAIN_LIB", None)
 
 def make_extension(
     name: str,
-    module: ctypes.CDLL,
+    module: ctypes.CDLL | None,
     canary: typing.Optional[str] = None,
     **kwargs: typing.Any,
 ) -> Extension | None:
@@ -66,13 +66,16 @@ if not SKIP_EXTENSIONS:
         define_macros = []
         extra_compile_args = ["-DPYSSPI_IS_LINUX"]
         sspi_lib = "sspi"
-        text_libs = ["icuio"]
+        text_libs = ["icuuc"]
 
     if SSPI_MAIN_LIB:
         sspi_path = SSPI_MAIN_LIB
 
-    print(f"Using {sspi_path} as SSPI module for platform checks")
-    sspi = ctypes.CDLL(sspi_path)
+    if SKIP_MODULE_CHECK:
+        sspi = None
+    else:
+        print(f"Using {sspi_path} as SSPI module for platform checks")
+        sspi = ctypes.CDLL(sspi_path)
 
     for e in [
         "context_attributes",
