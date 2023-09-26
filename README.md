@@ -49,7 +49,9 @@ python -m pip install -e .
 From there an editor like VSCode can be used to make changes and run the test suite.
 To recompile the Cython files after a change run the `build_ext --inplace` command.
 
-If building on Linux, a version of `libsspi.so` from [sspi-rs](https://github.com/Devolutions/sspi-rs) must be compiled with rust.
+If building on Linux or macOS, a version of `libsspi` from [sspi-rs](https://github.com/Devolutions/sspi-rs) must be compiled with rust.
+A copy of `libicuuc` alongside its headers must be present during compile time.
+To compile `sspi-rs`, download the git repository and run the following.
 
 ```bash
 cargo build \
@@ -67,13 +69,55 @@ The functions under the `sspi` namespace expose the various SSPI functions under
 For example the [AcquireCredentialsHandle](https://learn.microsoft.com/en-us/windows/win32/secauthn/acquirecredentialshandle--general) function is exposed as `sspi.acquire_credentials_handle`.
 
 Errors are raised as a `WindowsError` which contains the error message as formatted by Windows and the error code.
-For Linux there is a compatible `sspi.WindowsError` class that is structured like the Windows only `WindowsError` builtin.
+For non-Windows hosts there is a compatible `sspi.WindowsError` class that is structured like the Windows only `WindowsError` builtin.
 Some of the objects and constants are exposed as Python classes/dataclasses/enums for ease of use.
 Please read through the docstring of the function that will be used to learn more about how to use them.
 
-## Linux Support
+### Client Authentication Example
 
-While SSPI is a Windows only API, this package ships with `manylinux2014_x86_64` compatible wheels that use [sspi-rs](https://github.com/Devolutions/sspi-rs).
+Here is a basic example of how to use this library for client authentication:
+
+```python
+import sspi
+
+cred = sspi.UserCredential(
+    "username@DOMAIN.COM",
+    "password",
+)
+
+ctx = sspi.ClientSecurityContext(
+    "host/server.domain.com",
+    credential=cred,
+)
+
+in_token = None
+while not ctx.complete:
+    out_token = ctx.step(in_token)
+    if not out_token:
+        break
+
+    # exchange_with_server() is a function that sends the out_token to the
+    # server we are authenticating with. How this works depends on the app
+    # protocol being used, e.g. HTTP, sockets, LDAP, etc.
+    in_token = exchange_with_server(out_token)
+
+# Once authenticated we can wrap messages when talking to the server. The final
+# message being sent is dependent on the application protocol
+secret = b"secret data"
+
+wrapped_secret = ctx.wrap(secret)
+server_enc_resp = exchange_with_server(wrapped_secret)
+server_resp = ctx.unwrap(server_enc_resp).data
+```
+
+The `UserCredential` supports more options, like selecting the authentication protocol used.
+The `ClientSecurityContext` requires the Service Principal Name (SPN) of the target server and optional credentials.
+Other options can be used to control the context requested attributes, channel bindings, etc as needed.
+How the tokens and wrapped data is sent is dependent on the underlying protocols used, this example just shows when to exchange the data.
+
+## Non-Windows Support
+
+While SSPI is a Windows only API, this package ships with `manylinux2014_x86_64`, `macosx_x86_64`, and `macosx_arm64` compatible wheels that use [sspi-rs](https://github.com/Devolutions/sspi-rs).
 Support for this is experimental as all the authentication logic is contained in that external API.
 The interface for `sspi-rs` is exactly the same as SSPI on Windows so the same code should theoretically be possible.
 In saying this, compatibility with SSPI actual is not 100% there so use at your own risk.
