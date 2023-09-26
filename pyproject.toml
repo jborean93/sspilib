@@ -88,6 +88,15 @@ build-frontend = "build"
 [tool.cibuildwheel.linux]
 before-all = "build_helpers/cibuildwheel-before-all.sh"
 
+[tool.cibuildwheel.macos]
+before-all = "build_helpers/cibuildwheel-before-all.sh"
+
 [tool.cibuildwheel.linux.environment]
-LIBRARY_PATH = "/tmp/DevolutionsSspi/native-lib"
-LD_LIBRARY_PATH = "/tmp/DevolutionsSspi/native-lib"
+CPATH = "/tmp/DevolutionsSspi/include"
+LIBRARY_PATH = "/tmp/DevolutionsSspi/lib"
+LD_LIBRARY_PATH = "/tmp/DevolutionsSspi/lib"
+
+[tool.cibuildwheel.macos.environment]
+CPATH = "/tmp/DevolutionsSspi/include"
+LIBRARY_PATH = "/tmp/DevolutionsSspi/lib"
+DYLD_FALLBACK_LIBRARY_PATH = "/tmp/DevolutionsSspi/lib"

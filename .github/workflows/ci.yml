@@ -45,29 +45,18 @@ jobs:
       fail-fast: false
       matrix:
         include:
+        - os: macOS-12
+          version: cp*-macosx_x86_64
+        - os: macOS-12
+          version: cp*-macosx_arm64
+
         - os: ubuntu-latest
           version: cp*-manylinux_x86_64
 
         - os: windows-2022
-          version: cp38-win_amd64
+          version: cp*-win_amd64
         - os: windows-2022
-          version: cp38-win32
-        - os: windows-2022
-          version: cp39-win_amd64
-        - os: windows-2022
-          version: cp39-win32
-        - os: windows-2022
-          version: cp310-win_amd64
-        - os: windows-2022
-          version: cp310-win32
-        - os: windows-2022
-          version: cp311-win_amd64
-        - os: windows-2022
-          version: cp311-win32
-        - os: windows-2022
-          version: cp312-win_amd64
-        - os: windows-2022
-          version: cp312-win32
+          version: cp*-win32
 
     steps:
     - uses: actions/download-artifact@v3
@@ -87,9 +76,12 @@ jobs:
       uses: pypa/cibuildwheel@v2.16.0
       env:
         CIBW_ARCHS: all
+        CIBW_TEST_SKIP: '*_arm64'
         CIBW_BUILD: ${{ matrix.version }}
         CIBW_BUILD_VERBOSITY: 1
         CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease || 'false' }}
+        SSPI_BUILD_MACOS_AARCH64: ${{ fromJSON('["", "true"]')[matrix.version == 'cp*-macosx_arm64'] }}
+        SSPI_SKIP_MODULE_CHECK: ${{ fromJSON('["", "true"]')[matrix.version == 'cp*-macosx_arm64'] }}
 
     - uses: actions/upload-artifact@v3
       with:
@@ -107,6 +99,7 @@ jobs:
       fail-fast: false
       matrix:
         os:
+        - macOS-12
         - ubuntu-latest
         - windows-latest
         python-version:
@@ -120,6 +113,8 @@ jobs:
         - x64
 
         exclude:
+        - os: macOS-12
+          python-arch: x86
         - os: ubuntu-latest
           python-arch: x86
 
