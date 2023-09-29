@@ -67,10 +67,10 @@ jobs:
     - name: extract sdist
       shell: bash
       run: |
-        tar xf sspi-*.tar.gz
-        mv sspi-*/* .
-        rm -r sspi-*/
-        rm sspi-*.tar.gz
+        tar xf sspic-*.tar.gz
+        mv sspic-*/* .
+        rm -r sspic-*/
+        rm sspic-*.tar.gz
 
     - name: build wheel
       uses: pypa/cibuildwheel@v2.16.0

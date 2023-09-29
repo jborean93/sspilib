@@ -6,7 +6,7 @@ from __future__ import annotations
 import datetime
 import typing as t
 
-import sspi.raw as raw
+import sspic.raw as raw
 
 from ._filetime import filetime_to_datetime
 
@@ -31,7 +31,7 @@ class UserCredential(raw.CredHandle):
         UserCredential(protocol="Negotiate", protocol_list["!ntlm"])
 
     This class is designed to be a high level overlay on top of the
-    :class:`sspi.raw.CredHandle` class. It can be used as a credential for both
+    :class:`sspic.raw.CredHandle` class. It can be used as a credential for both
     the high level API as well as te low level API if more complex scenarios
     are needed.
 

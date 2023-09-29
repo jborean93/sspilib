@@ -3,8 +3,8 @@
 
 from __future__ import annotations
 
-import sspi.raw as raw
-from sspi.raw import AscReq, AscRet, IscReq, IscRet, SecChannelBindings, WindowsError
+import sspic.raw as raw
+from sspic.raw import AscReq, AscRet, IscReq, IscRet, SecChannelBindings, WindowsError
 
 from ._credential import UserCredential
 from ._sec_context import (

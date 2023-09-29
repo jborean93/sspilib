@@ -3,28 +3,28 @@
 
 from __future__ import annotations
 
-import sspi
+import sspic
 
 
 def test_cred_no_user() -> None:
-    cred = sspi.UserCredential()
+    cred = sspic.UserCredential()
     assert str(cred) == "CurrentUser - Negotiate"
     assert cred.username == "CurrentUser"
 
 
 def test_cred_username_no_domain() -> None:
-    cred = sspi.UserCredential("user")
+    cred = sspic.UserCredential("user")
     assert str(cred) == "user - Negotiate"
     assert cred.username == "user"
 
 
 def test_cred_username_upn() -> None:
-    cred = sspi.UserCredential("user@DOMAIN.COM")
+    cred = sspic.UserCredential("user@DOMAIN.COM")
     assert str(cred) == "user@DOMAIN.COM - Negotiate"
     assert cred.username == "user@DOMAIN.COM"
 
 
 def test_cred_username_domain() -> None:
-    cred = sspi.UserCredential("user", domain="domain")
+    cred = sspic.UserCredential("user", domain="domain")
     assert str(cred) == "domain\\user - Negotiate"
     assert cred.username == "domain\\user"

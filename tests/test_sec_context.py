@@ -8,21 +8,21 @@ import os
 
 import pytest
 
-import sspi
+import sspic
 
 
 def test_sec_context_attributes(
-    initial_contexts: tuple[sspi.ClientSecurityContext, sspi.ServerSecurityContext],
+    initial_contexts: tuple[sspic.ClientSecurityContext, sspic.ServerSecurityContext],
 ) -> None:
     c_ctx, s_ctx = initial_contexts
 
     assert not c_ctx.complete
     assert c_ctx.expiry == datetime.datetime.fromtimestamp(0, tz=datetime.timezone.utc)
-    assert c_ctx.attributes == sspi.IscRet(0)
+    assert c_ctx.attributes == sspic.IscRet(0)
 
     assert not s_ctx.complete
     assert s_ctx.expiry == datetime.datetime.fromtimestamp(0, tz=datetime.timezone.utc)
-    assert s_ctx.attributes == sspi.AscRet(0)
+    assert s_ctx.attributes == sspic.AscRet(0)
 
     s_token = None
     while not (c_ctx.complete and not s_token):
@@ -35,17 +35,17 @@ def test_sec_context_attributes(
 
     assert c_ctx.complete
     assert c_ctx.expiry != datetime.datetime.fromtimestamp(0, tz=datetime.timezone.utc)
-    assert c_ctx.attributes != sspi.IscRet(0)
+    assert c_ctx.attributes != sspic.IscRet(0)
 
     assert s_ctx.complete
     assert isinstance(s_ctx.expiry, datetime.datetime)
-    assert s_ctx.attributes != sspi.AscRet(0)
+    assert s_ctx.attributes != sspic.AscRet(0)
 
 
 # https://github.com/Devolutions/sspi-rs/issues/84
 @pytest.mark.skipif(os.name != "nt", reason="sspi-rs STREAM unwrapping does not support NTLM yet")
 def test_sec_context_wrapping(
-    authenticated_contexts: tuple[sspi.ClientSecurityContext, sspi.ServerSecurityContext],
+    authenticated_contexts: tuple[sspic.ClientSecurityContext, sspic.ServerSecurityContext],
 ) -> None:
     client_data = os.urandom(32)
     server_data = os.urandom(32)
@@ -55,7 +55,7 @@ def test_sec_context_wrapping(
     assert wrapped_data != client_data
 
     unwrapped_data = s_ctx.unwrap(wrapped_data)
-    assert isinstance(unwrapped_data, sspi.UnwrapResult)
+    assert isinstance(unwrapped_data, sspic.UnwrapResult)
     assert unwrapped_data.qop == 0
     assert unwrapped_data.data == client_data
 
@@ -63,14 +63,14 @@ def test_sec_context_wrapping(
     assert wrapped_data != server_data
 
     unwrapped_data = c_ctx.unwrap(wrapped_data)
-    assert isinstance(unwrapped_data, sspi.UnwrapResult)
+    assert isinstance(unwrapped_data, sspic.UnwrapResult)
     assert unwrapped_data.qop == 0
     assert unwrapped_data.data == server_data
 
 
 @pytest.mark.skipif(os.name != "nt", reason="sspi-rs does not support signatures yet")
 def test_sec_context_signatures(
-    authenticated_contexts: tuple[sspi.ClientSecurityContext, sspi.ServerSecurityContext],
+    authenticated_contexts: tuple[sspic.ClientSecurityContext, sspic.ServerSecurityContext],
 ) -> None:
     client_data = os.urandom(32)
     server_data = os.urandom(32)
@@ -84,7 +84,7 @@ def test_sec_context_signatures(
 
 
 def test_wrap_with_bytearray(
-    authenticated_contexts: tuple[sspi.ClientSecurityContext, sspi.ServerSecurityContext],
+    authenticated_contexts: tuple[sspic.ClientSecurityContext, sspic.ServerSecurityContext],
 ) -> None:
     client_data = os.urandom(32)
     b_client_data = bytearray(client_data)
@@ -99,14 +99,14 @@ def test_wrap_with_bytearray(
 
     b_wrapped_data = bytearray(wrapped_data)
     unwrapped_data = s_ctx.unwrap(b_wrapped_data)
-    assert isinstance(unwrapped_data, sspi.UnwrapResult)
+    assert isinstance(unwrapped_data, sspic.UnwrapResult)
     assert unwrapped_data.qop == 0
     assert unwrapped_data.data == client_data
     assert bytes(b_wrapped_data) != wrapped_data
 
 
 def test_wrap_with_writable_memoryview(
-    authenticated_contexts: tuple[sspi.ClientSecurityContext, sspi.ServerSecurityContext],
+    authenticated_contexts: tuple[sspic.ClientSecurityContext, sspic.ServerSecurityContext],
 ) -> None:
     client_data = os.urandom(32)
     b_client_data = memoryview(bytearray(client_data))
@@ -121,14 +121,14 @@ def test_wrap_with_writable_memoryview(
 
     b_wrapped_data = memoryview(bytearray(wrapped_data))
     unwrapped_data = s_ctx.unwrap(b_wrapped_data)
-    assert isinstance(unwrapped_data, sspi.UnwrapResult)
+    assert isinstance(unwrapped_data, sspic.UnwrapResult)
     assert unwrapped_data.qop == 0
     assert unwrapped_data.data == client_data
     assert bytes(b_wrapped_data) != wrapped_data
 
 
 def test_wrap_with_readonly_memoryview(
-    authenticated_contexts: tuple[sspi.ClientSecurityContext, sspi.ServerSecurityContext],
+    authenticated_contexts: tuple[sspic.ClientSecurityContext, sspic.ServerSecurityContext],
 ) -> None:
     client_data = os.urandom(32)
     b_client_data = memoryview(client_data)
@@ -143,7 +143,7 @@ def test_wrap_with_readonly_memoryview(
 
     b_wrapped_data = memoryview(wrapped_data)
     unwrapped_data = s_ctx.unwrap(b_wrapped_data)
-    assert isinstance(unwrapped_data, sspi.UnwrapResult)
+    assert isinstance(unwrapped_data, sspic.UnwrapResult)
     assert unwrapped_data.qop == 0
     assert unwrapped_data.data == client_data
     assert bytes(b_wrapped_data) == wrapped_data

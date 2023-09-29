@@ -4,10 +4,10 @@ exclude .coverage
 exclude .gitignore
 exclude .pre-commit-config.yaml
 recursive-include build_helpers *
-include src/sspi/raw/*.h
-include src/sspi/raw/*.pyx
-include src/sspi/raw/*.pxd
-exclude src/sspi/raw/*.c
+include src/sspic/raw/*.h
+include src/sspic/raw/*.pyx
+include src/sspic/raw/*.pxd
+exclude src/sspic/raw/*.c
 recursive-include stubs *
 recursive-include tests *
 recursive-exclude tests *.pyc
