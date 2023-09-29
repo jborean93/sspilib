@@ -237,7 +237,7 @@ def _replace_cred_handle(
     CredHandle src not None,
     CredHandle dst not None,
 ) -> None:
-    # This is only used by sspi._credential.py to store the cred state in
+    # This is only used by sspic._credential.py to store the cred state in
     # itself.
     dst.raw = src.raw
     dst.needs_free = src.needs_free

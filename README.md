@@ -1,12 +1,12 @@
 # Python SSPI Library
 
 [![Test workflow](https://github.com/jborean93/pysspi/actions/workflows/ci.yml/badge.svg)](https://github.com/jborean93/pysspi/actions/workflows/ci.yml)
-[![PyPI version](https://badge.fury.io/py/sspi.svg)](https://badge.fury.io/py/sspi)
+[![PyPI version](https://badge.fury.io/py/sspic.svg)](https://badge.fury.io/py/sspic)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](https://github.com/jborean93/pysspi/blob/main/LICENSE)
 
 This library provides Python functions that wraps the Windows SSPI API.
 It is designed to be both a high and low level interface that other libraries can easily leverage to use with SSPI integration.
-The high level interface is under the `sspi` namespace whereas the low-level interface is under the `sspi.raw` interface.
+The high level interface is under the `sspic` namespace whereas the low-level interface is under the `sspic.raw` interface.
 
 ## Requirements
 
@@ -19,16 +19,16 @@ More requires are needed to compile the code from scratch but this library is sh
 Simply run:
 
 ```bash
-pip install sspi
+pip install sspic
 ```
 
 To install from source run the following:
 
 ```bash
-git clone https://github.com/jborean93/pysspi.git
+git clone https://github.com/jborean93/pysspic.git
 python -m pip install build
 python -m build
-pip install dist/sspi-*.whl
+pip install dist/sspic-*.whl
 ```
 
 ## Development
@@ -36,7 +36,7 @@ pip install dist/sspi-*.whl
 To run the tests or make changes to this repo run the following:
 
 ```bash
-git clone https://github.com/jborean93/pysspi.git
+git clone https://github.com/jborean93/pysspic.git
 pip install -r requirements-dev.txt
 pre-commit install
 
@@ -65,11 +65,12 @@ export LIBRARY_PATH="${PWD}/target/release"
 ## Structure
 
 This library is merely a wrapper around the SSPI APIs.
-The functions under the `sspi` namespace expose the various SSPI functions under a more Pythonic snake_case format.
-For example the [AcquireCredentialsHandle](https://learn.microsoft.com/en-us/windows/win32/secauthn/acquirecredentialshandle--general) function is exposed as `sspi.acquire_credentials_handle`.
+The high level API under `sspic` exposes an easier to use Python API for SSPI.
+The functions under the `sspic.raw` namespace expose the various SSPI functions under a more Pythonic snake_case format.
+For example the [AcquireCredentialsHandle](https://learn.microsoft.com/en-us/windows/win32/secauthn/acquirecredentialshandle--general) function is exposed as `sspic.raw.acquire_credentials_handle`.
 
 Errors are raised as a `WindowsError` which contains the error message as formatted by Windows and the error code.
-For non-Windows hosts there is a compatible `sspi.WindowsError` class that is structured like the Windows only `WindowsError` builtin.
+For non-Windows hosts there is a compatible `sspic.WindowsError` class that is structured like the Windows only `WindowsError` builtin.
 Some of the objects and constants are exposed as Python classes/dataclasses/enums for ease of use.
 Please read through the docstring of the function that will be used to learn more about how to use them.
 
@@ -78,14 +79,14 @@ Please read through the docstring of the function that will be used to learn mor
 Here is a basic example of how to use this library for client authentication:
 
 ```python
-import sspi
+import sspic
 
-cred = sspi.UserCredential(
+cred = sspic.UserCredential(
     "username@DOMAIN.COM",
     "password",
 )
 
-ctx = sspi.ClientSecurityContext(
+ctx = sspic.ClientSecurityContext(
     "host/server.domain.com",
     credential=cred,
 )

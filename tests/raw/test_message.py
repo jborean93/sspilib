@@ -7,7 +7,7 @@ import os
 
 import pytest
 
-import sspi.raw as sr
+import sspic.raw as sr
 
 
 @pytest.mark.skipif(os.name != "nt", reason="sspi-rs does not support signature functions")

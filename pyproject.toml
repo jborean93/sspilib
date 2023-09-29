@@ -6,7 +6,7 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "sspi"
+name = "sspic"
 version = "0.1.0"
 description = "SSPI API bindings for Python"
 readme = "README.md"
@@ -37,11 +37,11 @@ include-package-data = true
 where = ["src"]
 
 [tool.setuptools.package-data]
-sspi = ["py.typed"]
-"sspi.raw" = ["*.pyi"]
+sspic = ["py.typed"]
+"sspic.raw" = ["*.pyi"]
 
 [tool.setuptools.exclude-package-data]
-"sspi.raw" = ["*.h", "*.pxd", "*.pyx"]
+"sspic.raw" = ["*.h", "*.pxd", "*.pyx"]
 
 [tool.black]
 line-length = 120

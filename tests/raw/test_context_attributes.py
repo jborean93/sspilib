@@ -7,7 +7,7 @@ import os
 
 import pytest
 
-import sspi.raw as sr
+import sspic.raw as sr
 
 
 # https://github.com/Devolutions/sspi-rs/issues/169

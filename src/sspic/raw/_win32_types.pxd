@@ -15,7 +15,7 @@ cdef extern from "python_sspi.h":
     {
         if (WinError == NULL)
         {
-            PyObject *winerror = PyImport_ImportModule("sspi.raw._winerror");
+            PyObject *winerror = PyImport_ImportModule("sspic.raw._winerror");
             if (winerror == NULL)
             {
                 PyErr_SetString(PyExc_RuntimeError, "Failed to import custom WindowsError.");
