@@ -56,6 +56,8 @@ jobs:
         - os: windows-2022
           version: cp*-win_amd64
         - os: windows-2022
+          version: cp*-win_arm64
+        - os: windows-2022
           version: cp*-win32
 
     steps:
@@ -81,7 +83,7 @@ jobs:
         CIBW_BUILD_VERBOSITY: 1
         CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease || 'false' }}
         SSPI_BUILD_MACOS_AARCH64: ${{ fromJSON('["", "true"]')[matrix.version == 'cp*-macosx_arm64'] }}
-        SSPI_SKIP_MODULE_CHECK: ${{ fromJSON('["", "true"]')[matrix.version == 'cp*-macosx_arm64'] }}
+        SSPI_SKIP_MODULE_CHECK: ${{ fromJSON('["", "true"]')[matrix.version == 'cp*-macosx_arm64' || matrix.version == 'cp*-win_arm64'] }}
 
     - uses: actions/upload-artifact@v3
       with:
