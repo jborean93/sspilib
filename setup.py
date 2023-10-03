@@ -64,7 +64,7 @@ if not SKIP_EXTENSIONS:
         sspi_path = f"libsspi.{ext}"
 
         define_macros = []
-        extra_compile_args = ["-DPYSSPI_IS_LINUX"]
+        extra_compile_args = ["-DSSPILIB_IS_LINUX"]
         sspi_lib = "sspi"
         text_libs = ["icuuc"]
 
@@ -99,7 +99,7 @@ if not SKIP_EXTENSIONS:
                 canary = e[2]
 
         ext = make_extension(
-            f"sspic.raw._{name}",
+            f"sspilib.raw._{name}",
             module=sspi,
             canary=canary,
             extra_compile_args=extra_compile_args,

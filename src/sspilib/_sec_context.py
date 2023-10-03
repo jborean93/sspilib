@@ -7,7 +7,7 @@ import abc
 import datetime
 import typing as t
 
-import sspic.raw as raw
+import sspilib.raw as raw
 
 from ._filetime import filetime_to_datetime
 
@@ -128,7 +128,7 @@ class SecurityContext(raw.CtxtHandle, metaclass=abc.ABCMeta):
         stage to honour the encryption request.
 
         If a more complex set of buffers is needed to wrap the data, use the
-        :meth:`sspic.raw.encrypt_message` function with this context.
+        :meth:`sspilib.raw.encrypt_message` function with this context.
 
         Args:
             data: The data to wrap.
@@ -175,7 +175,7 @@ class SecurityContext(raw.CtxtHandle, metaclass=abc.ABCMeta):
         then provide a byte string or readonly memoryview.
 
         If a more complex set of buffers is needed to unwrap the data, use the
-        :meth:`sspic.raw.decrypt_message` function with this context.
+        :meth:`sspilib.raw.decrypt_message` function with this context.
 
         Args:
             data: The data to unwrap.
@@ -218,7 +218,7 @@ class SecurityContext(raw.CtxtHandle, metaclass=abc.ABCMeta):
         then provide a byte string or readonly memoryview.
 
         If a more complex set of buffers is needed to sign the data, use the
-        :meth:`sspic.raw.make_signature` function with this context.
+        :meth:`sspilib.raw.make_signature` function with this context.
 
         Args:
             data: The data to sign.
@@ -262,7 +262,7 @@ class SecurityContext(raw.CtxtHandle, metaclass=abc.ABCMeta):
         then provide a byte string or readonly memoryview.
 
         If a more complex set of buffers is needed to unwrap the data, use the
-        :meth:`sspic.raw.verify_signature` function with this context.
+        :meth:`sspilib.raw.verify_signature` function with this context.
 
         Args:
             data: The data to verify.
@@ -315,8 +315,8 @@ class ClientSecurityContext(SecurityContext):
 
     This represents an SSPI security context that can be used for client side
     authentication. This class is designed to be a high level overlay on top of
-    the :class:`sspic.raw.CtxtHandle` class. it can be used directly with
-    any low level API in the ``sspic.raw`` namespace that requires a context
+    the :class:`sspilib.raw.CtxtHandle` class. it can be used directly with
+    any low level API in the ``sspilib.raw`` namespace that requires a context
     handle instance in case the low level interface doesn't expose the methods
     needed.
 
@@ -399,8 +399,8 @@ class ServerSecurityContext(SecurityContext):
 
     This represents an SSPI security context that can be used for server side
     authentication. This class is designed to be a high level overlay on top of
-    the :class:`sspic.raw.CtxtHandle` class. it can be used directly with
-    any low level API in the ``sspic.raw`` namespace that requires a context
+    the :class:`sspilib.raw.CtxtHandle` class. it can be used directly with
+    any low level API in the ``sspilib.raw`` namespace that requires a context
     handle instance in case the low level interface doesn't expose the methods
     needed.
 

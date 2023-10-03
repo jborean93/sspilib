@@ -8,14 +8,14 @@ from libc.stddef cimport size_t
 cdef extern from "python_sspi.h":
     # PyErr_SetFromWindowsErr is Windows only, need a shim for Linux
     """
-    #if defined(PYSSPI_IS_LINUX)
+    #if defined(SSPILIB_IS_LINUX)
     PyObject *WinError;
 
     PyObject *PyErr_SetFromWindowsErr(int ierr)
     {
         if (WinError == NULL)
         {
-            PyObject *winerror = PyImport_ImportModule("sspic.raw._winerror");
+            PyObject *winerror = PyImport_ImportModule("sspilib.raw._winerror");
             if (winerror == NULL)
             {
                 PyErr_SetString(PyExc_RuntimeError, "Failed to import custom WindowsError.");

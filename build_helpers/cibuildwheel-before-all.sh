@@ -19,13 +19,13 @@ ICU_CONFIGURE_FLAGS=(
 ICU_CFLAGS="-O3"
 ICU_CXXFLAGS=""
 
-PYSSPI_INCLUDE_PATH="${CPATH%%:*}"
-PYSSPI_LIB_PATH="${LIBRARY_PATH%%:*}"
+SSPILIB_INCLUDE_PATH="${CPATH%%:*}"
+SSPILIB_LIB_PATH="${LIBRARY_PATH%%:*}"
 
-mkdir -p "${PYSSPI_INCLUDE_PATH}"
-mkdir -p "${PYSSPI_LIB_PATH}"
+mkdir -p "${SSPILIB_INCLUDE_PATH}"
+mkdir -p "${SSPILIB_LIB_PATH}"
 
-PYSSPI_PATH="$( dirname "${PYSSPI_LIB_PATH}" )"
+SSPILIB_PATH="$( dirname "${SSPILIB_LIB_PATH}" )"
 
 if [ "$( uname )" == "Darwin" ]; then
     LIB_EXT="dylib"
@@ -46,18 +46,18 @@ fi
 
 wget \
     --no-verbose \
-    --directory-prefix="${PYSSPI_PATH}" \
+    --directory-prefix="${SSPILIB_PATH}" \
     "https://github.com/unicode-org/icu/releases/download/release-$( echo ${ICU_VERSION} | sed 's/\./-/' )/icu4c-$( echo ${ICU_VERSION} | sed 's/\./_/' )-src.tgz"
 
 tar -xf \
-    "${PYSSPI_PATH}"/icu4c-*-src.tgz \
-    -C "${PYSSPI_PATH}"
+    "${SSPILIB_PATH}"/icu4c-*-src.tgz \
+    -C "${SSPILIB_PATH}"
 
-mkdir -p "${PYSSPI_PATH}/icu-native"
-pushd "${PYSSPI_PATH}/icu-native"
+mkdir -p "${SSPILIB_PATH}/icu-native"
+pushd "${SSPILIB_PATH}/icu-native"
 
 CFLAGS="${ICU_CFLAGS}" CXXFLAGS="${ICU_CXXFLAGS} ${CFLAGS}" \
-    "${PYSSPI_PATH}/icu/source/configure" \
+    "${SSPILIB_PATH}/icu/source/configure" \
     "${ICU_CONFIGURE_FLAGS[@]}"
 
 make -j${CPUS}
@@ -65,27 +65,27 @@ make -j${CPUS}
 popd
 
 if [ x"${SSPI_BUILD_MACOS_AARCH64:-}" = "xtrue" ]; then
-    mkdir -p "${PYSSPI_PATH}/icu-arm64"
-    pushd "${PYSSPI_PATH}/icu-arm64"
+    mkdir -p "${SSPILIB_PATH}/icu-arm64"
+    pushd "${SSPILIB_PATH}/icu-arm64"
 
     CFLAGS="${ICU_CFLAGS} -arch arm64" CXXFLAGS="${ICU_CXXFLAGS} ${CFLAGS}" \
-        "${PYSSPI_PATH}/icu/source/configure" \
+        "${SSPILIB_PATH}/icu/source/configure" \
         "${ICU_CONFIGURE_FLAGS[@]}" \
         --disable-tools \
         --host=arm-apple-darwin \
-        --with-cross-build="${PYSSPI_PATH}/icu-native"
+        --with-cross-build="${SSPILIB_PATH}/icu-native"
 
     make -j${CPUS}
 
     popd
 
-    cp "${PYSSPI_PATH}"/icu-arm64/lib/*.a "${PYSSPI_LIB_PATH}/"
+    cp "${SSPILIB_PATH}"/icu-arm64/lib/*.a "${SSPILIB_LIB_PATH}/"
 else
-    cp "${PYSSPI_PATH}"/icu-native/lib/*.a "${PYSSPI_LIB_PATH}/"
+    cp "${SSPILIB_PATH}"/icu-native/lib/*.a "${SSPILIB_LIB_PATH}/"
 fi
 
 echo "Copying header files to shared include dir"
-cp -R "${PYSSPI_PATH}"/icu/source/common/* "${CPATH}"
+cp -R "${SSPILIB_PATH}"/icu/source/common/* "${CPATH}"
 
 set +e
 command -v rustup
@@ -101,18 +101,18 @@ fi
 echo "Downloading sspi-rs at commit ${DEVOLUTIONS_COMMIT_ID}"
 wget \
     --no-verbose \
-    --directory-prefix="${PYSSPI_PATH}" \
+    --directory-prefix="${SSPILIB_PATH}" \
     "https://github.com/Devolutions/sspi-rs/archive/${DEVOLUTIONS_COMMIT_ID}.zip"
 
 echo "Extracting sspi-rs source code"
 unzip \
     -q \
-    -d "${PYSSPI_PATH}" \
-    "${PYSSPI_PATH}/${DEVOLUTIONS_COMMIT_ID}.zip"
+    -d "${SSPILIB_PATH}" \
+    "${SSPILIB_PATH}/${DEVOLUTIONS_COMMIT_ID}.zip"
 
 SSPI_RS_OPTIONS=(
     "--manifest-path"
-    "${PYSSPI_PATH}/sspi-rs-${DEVOLUTIONS_COMMIT_ID}/Cargo.toml"
+    "${SSPILIB_PATH}/sspi-rs-${DEVOLUTIONS_COMMIT_ID}/Cargo.toml"
     "--package"
     "sspi-ffi"
     "--release"
@@ -128,5 +128,5 @@ fi
 echo "Compiling sspi-rs release library"
 cargo build "${SSPI_RS_OPTIONS[@]}"
 
-cp "${PYSSPI_PATH}/sspi-rs-${DEVOLUTIONS_COMMIT_ID}/target/${SSPI_RS_TARGET_DIR}/libsspi.${LIB_EXT}" \
-    "${PYSSPI_LIB_PATH}/"
+cp "${SSPILIB_PATH}/sspi-rs-${DEVOLUTIONS_COMMIT_ID}/target/${SSPI_RS_TARGET_DIR}/libsspi.${LIB_EXT}" \
+    "${SSPILIB_LIB_PATH}/"

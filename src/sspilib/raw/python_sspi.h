@@ -1,4 +1,4 @@
-#if defined(PYSSPI_IS_LINUX)
+#if defined(SSPILIB_IS_LINUX)
 // We need to redefine all the relevant entries in the Windows headers
 #include <stdint.h>
 

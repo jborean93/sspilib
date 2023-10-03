@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import os
 
-import sspic.raw as sr
+import sspilib.raw as sr
 
 
 def test_set_kdc_proxy_default() -> None:

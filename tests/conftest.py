@@ -8,32 +8,32 @@ import socket
 
 import pytest
 
-import sspic
+import sspilib
 
 
 @pytest.fixture()
-def initial_contexts() -> tuple[sspic.ClientSecurityContext, sspic.ServerSecurityContext]:
+def initial_contexts() -> tuple[sspilib.ClientSecurityContext, sspilib.ServerSecurityContext]:
     spn = f"host/{socket.gethostname()}"
 
     # sspi-rs only supports acceptors for NTLM at this point in time. it also
     # cannot rely on implicit creds
     if os.name == "nt":
-        c_cred = sspic.UserCredential(protocol="NTLM")
-        s_cred = sspic.UserCredential(usage="accept")
+        c_cred = sspilib.UserCredential(protocol="NTLM")
+        s_cred = sspilib.UserCredential(usage="accept")
     else:
-        c_cred = sspic.UserCredential("user", "pass", protocol="NTLM")
-        s_cred = sspic.UserCredential("user", "pass", protocol="NTLM", usage="accept")
+        c_cred = sspilib.UserCredential("user", "pass", protocol="NTLM")
+        s_cred = sspilib.UserCredential("user", "pass", protocol="NTLM", usage="accept")
 
-    c_ctx = sspic.ClientSecurityContext(target_name=spn, credential=c_cred)
-    s_ctx = sspic.ServerSecurityContext(credential=s_cred)
+    c_ctx = sspilib.ClientSecurityContext(target_name=spn, credential=c_cred)
+    s_ctx = sspilib.ServerSecurityContext(credential=s_cred)
 
     return c_ctx, s_ctx
 
 
 @pytest.fixture()
 def authenticated_contexts(
-    initial_contexts: tuple[sspic.ClientSecurityContext, sspic.ServerSecurityContext],
-) -> tuple[sspic.ClientSecurityContext, sspic.ServerSecurityContext]:
+    initial_contexts: tuple[sspilib.ClientSecurityContext, sspilib.ServerSecurityContext],
+) -> tuple[sspilib.ClientSecurityContext, sspilib.ServerSecurityContext]:
     c_ctx, s_ctx = initial_contexts
 
     s_token = None

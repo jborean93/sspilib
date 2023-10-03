@@ -8,7 +8,7 @@ import socket
 
 import pytest
 
-import sspic.raw as sr
+import sspilib.raw as sr
 
 
 def test_sec_exchange_alloc_memory() -> None:
