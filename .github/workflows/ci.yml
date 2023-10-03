@@ -1,4 +1,4 @@
-name: Test pysspi
+name: Test sspilib
 on:
   push:
     branches:
@@ -69,10 +69,10 @@ jobs:
     - name: extract sdist
       shell: bash
       run: |
-        tar xf sspic-*.tar.gz
-        mv sspic-*/* .
-        rm -r sspic-*/
-        rm sspic-*.tar.gz
+        tar xf sspilib-*.tar.gz
+        mv sspilib-*/* .
+        rm -r sspilib-*/
+        rm sspilib-*.tar.gz
 
     - name: build wheel
       uses: pypa/cibuildwheel@v2.16.0
@@ -109,7 +109,7 @@ jobs:
         - 3.9
         - '3.10'
         - '3.11'
-        - '3.12.0-rc.3'
+        - '3.12'
         python-arch:
         - x86
         - x64

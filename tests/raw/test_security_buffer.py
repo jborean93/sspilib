@@ -5,7 +5,7 @@ from __future__ import annotations
 
 import pytest
 
-import sspic.raw as sr
+import sspilib.raw as sr
 
 
 def test_empty_sec_buffer_desc() -> None:

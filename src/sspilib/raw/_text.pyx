@@ -11,7 +11,7 @@ cdef extern from "python_sspi.h":
     # Linux defines wchar_t as UTF-32 whereas the APIs expect UTF-16. This
     # tries to paper over the differences with a shim.
     """
-    #if defined(PYSSPI_IS_LINUX)
+    #if defined(SSPILIB_IS_LINUX)
 
     #include <unicode/ustring.h>
 
