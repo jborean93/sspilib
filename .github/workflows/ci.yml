@@ -17,9 +17,9 @@ jobs:
     name: build sdist
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: 3.9
 
@@ -30,9 +30,9 @@ jobs:
       env:
         SSPI_SKIP_EXTENSIONS: true
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
-        name: artifact
+        name: artifact-sdist
         path: ./dist/*.tar.gz
 
   build_wheels:
@@ -47,23 +47,29 @@ jobs:
         include:
         - os: macOS-12
           version: cp*-macosx_x86_64
+          artifact_name: macosx_x86_64
         - os: macOS-12
           version: cp*-macosx_arm64
+          artifact_name: macosx_arm64
 
         - os: ubuntu-latest
           version: cp*-manylinux_x86_64
+          artifact_name: manylinux_x86_64
 
         - os: windows-2022
           version: cp*-win_amd64
+          artifact_name: win_amd64
         - os: windows-2022
           version: cp*-win_arm64
+          artifact_name: win_arm64
         - os: windows-2022
           version: cp*-win32
+          artifact_name: win_win32
 
     steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
-        name: artifact
+        name: artifact-sdist
         path: ./
 
     - name: extract sdist
@@ -75,7 +81,7 @@ jobs:
         rm sspilib-*.tar.gz
 
     - name: build wheel
-      uses: pypa/cibuildwheel@v2.16.0
+      uses: pypa/cibuildwheel@v2.16.5
       env:
         CIBW_ARCHS: all
         CIBW_TEST_SKIP: '*_arm64'
@@ -85,10 +91,10 @@ jobs:
         SSPI_BUILD_MACOS_AARCH64: ${{ fromJSON('["", "true"]')[matrix.version == 'cp*-macosx_arm64'] }}
         SSPI_SKIP_MODULE_CHECK: ${{ fromJSON('["", "true"]')[matrix.version == 'cp*-macosx_arm64' || matrix.version == 'cp*-win_arm64'] }}
 
-    - uses: actions/upload-artifact@v3
+    - uses: actions/upload-artifact@v4
       with:
         path: ./wheelhouse/*.whl
-        name: artifact
+        name: artifact-wheel-${{ matrix.artifact_name }}
 
   test:
     name: test
@@ -121,16 +127,17 @@ jobs:
           python-arch: x86
 
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
 
-    - uses: actions/setup-python@v4
+    - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.python-arch }}
 
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
-        name: artifact
+        pattern: artifact-*
+        merge-multiple: true
         path: ./dist
 
     - name: Test
@@ -141,7 +148,7 @@ jobs:
 
     - name: Upload Test Results
       if: always()
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: Unit Test Results (${{ matrix.os }} ${{ matrix.python-version }}) ${{ matrix.python-arch }}
         path: ./junit/test-results.xml
@@ -156,9 +163,10 @@ jobs:
       id-token: write
 
     steps:
-    - uses: actions/download-artifact@v3
+    - uses: actions/download-artifact@v4
       with:
-        name: artifact
+        pattern: artifact-*
+        merge-multiple: true
         path: ./dist
 
     - name: Publish
