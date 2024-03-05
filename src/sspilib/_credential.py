@@ -28,7 +28,7 @@ class UserCredential(raw.CredHandle):
     protocol can use. To stop a protocol from being used, prefix the value with
     ``!``, for example the following will turn off NTLM being negotiated:
 
-        UserCredential(protocol="Negotiate", protocol_list["!ntlm"])
+        UserCredential(protocol="Negotiate", protocol_list=["!ntlm"])
 
     This class is designed to be a high level overlay on top of the
     :class:`sspilib.raw.CredHandle` class. It can be used as a credential for both
