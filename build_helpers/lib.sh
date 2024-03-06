@@ -29,7 +29,7 @@ lib::setup::python_requirements() {
     SSPI_VERSION="$( grep -m 1 version pyproject.toml | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3 )"
 
     python -m pip install sspilib=="${SSPI_VERSION}" \
-        --find-links "file:///${DIST_LINK_PATH}" \
+        --find-links "file://${DIST_LINK_PATH}" \
         --verbose
 
     echo "Installing dev dependencies"

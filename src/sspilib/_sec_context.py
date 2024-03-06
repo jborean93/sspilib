@@ -22,7 +22,7 @@ class SecurityContext(raw.CtxtHandle, metaclass=abc.ABCMeta):
 
     def __init__(
         self,
-        credential: raw.CredHandle | None = None,
+        credential: raw.CredHandle,
         channel_bindings: raw.SecChannelBindings | None = None,
     ) -> None:
         self._complete = False
@@ -320,6 +320,10 @@ class ClientSecurityContext(SecurityContext):
     handle instance in case the low level interface doesn't expose the methods
     needed.
 
+    The client must specify a credential which stores the credential to use for
+    authentication as well as extra information that controls how the
+    security protocol will perform the authentication steps.
+
     The client must specify a target_name which is typically the Service
     Principal Name (SPN) of the service. It might be a different value
     depending on the security protocol used.
@@ -329,10 +333,6 @@ class ClientSecurityContext(SecurityContext):
     specified. Custom flags can be requested but it will overwrite the default
     set.
 
-    The credential stores the credential to use for authentication as well as
-    extra information that controls how the security protocol will perform
-    the authentication steps.
-
     Optional channel bindings can be specified which is used to tie the
     security context with an outer channel.
 
@@ -340,18 +340,17 @@ class ClientSecurityContext(SecurityContext):
     context has been negotiated and is complete.
 
     Args:
+        credential: A credential to use for authentication.
         target_name: The target service's name, typically the SPN.
         flags: Custom ISC REQ flags to use.
-        credential: A credential to use for authentication, defaults to the
-            current user context if not set.
         channel_bindings: Optional channel bindings to tie the context to.
     """
 
     def __init__(
         self,
+        credential: raw.CredHandle,
         target_name: str,
         flags: raw.IscReq | int | None = None,
-        credential: raw.CredHandle | None = None,
         *,
         channel_bindings: raw.SecChannelBindings | None = None,
     ) -> None:
@@ -404,14 +403,14 @@ class ServerSecurityContext(SecurityContext):
     handle instance in case the low level interface doesn't expose the methods
     needed.
 
+    The credential stores the credential to use for authentication as well as
+    extra information that controls how the security protocol will perform
+    the authentication steps.
+
     By default the flags are set to request mutual auth, replay detection,
     sequence detection, confidentiality, and integrity if no flags are
     specified. Custom flags can be requested but it will overwrite the default
     set.
-
-    The credential stores the credential to use for authentication as well as
-    extra information that controls how the security protocol will perform
-    the authentication steps.
 
     Optional channel bindings can be specified which is used to tie the
     security context with an outer channel.
@@ -420,15 +419,15 @@ class ServerSecurityContext(SecurityContext):
     context has been negotiated and is complete.
 
     Args:
-        flags: Custom ASC REQ flags to use.
         credential: A credential to use for authentication
+        flags: Custom ASC REQ flags to use.
         channel_bindings: Optional channel bindings to tie the context to.
     """
 
     def __init__(
         self,
+        credential: raw.CredHandle,
         flags: raw.AscReq | int | None = None,
-        credential: raw.CredHandle | None = None,
         *,
         channel_bindings: raw.SecChannelBindings | None = None,
     ) -> None:

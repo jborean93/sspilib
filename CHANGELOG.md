@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.0 - TBD
+
++ **Breaking Change** - The constructor arguments for `sspi.ClientSecurityContext` and `sspi.SeverSecurityContext` have made the `credential` argument non-optional and moved to the first positional argument
+  + This is in reflection of the `credential` actually being mandatory
++ Update documentation for `accept_security_context` and `initialize_security_context` to properly reflect that the credential must be specified on the first call to those functions
+
 ## 0.1.0 - 2024-10-04
 
 First official release of the `sspilib` Python module.

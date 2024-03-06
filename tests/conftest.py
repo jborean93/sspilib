@@ -24,7 +24,7 @@ def initial_contexts() -> tuple[sspilib.ClientSecurityContext, sspilib.ServerSec
         c_cred = sspilib.UserCredential("user", "pass", protocol="NTLM")
         s_cred = sspilib.UserCredential("user", "pass", protocol="NTLM", usage="accept")
 
-    c_ctx = sspilib.ClientSecurityContext(target_name=spn, credential=c_cred)
+    c_ctx = sspilib.ClientSecurityContext(credential=c_cred, target_name=spn)
     s_ctx = sspilib.ServerSecurityContext(credential=s_cred)
 
     return c_ctx, s_ctx
