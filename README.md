@@ -87,8 +87,8 @@ cred = sspilib.UserCredential(
 )
 
 ctx = sspilib.ClientSecurityContext(
-    "host/server.domain.com",
     credential=cred,
+    target_name="host/server.domain.com",
 )
 
 in_token = None
@@ -112,7 +112,7 @@ server_resp = ctx.unwrap(server_enc_resp).data
 ```
 
 The `UserCredential` supports more options, like selecting the authentication protocol used.
-The `ClientSecurityContext` requires the Service Principal Name (SPN) of the target server and optional credentials.
+The `ClientSecurityContext` requires the credentials to use and the Service Principal Name (SPN) of the target server.
 Other options can be used to control the context requested attributes, channel bindings, etc as needed.
 How the tokens and wrapped data is sent is dependent on the underlying protocols used, this example just shows when to exchange the data.
 
