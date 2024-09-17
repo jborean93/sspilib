@@ -107,10 +107,13 @@ class SecBufferDesc(t.Iterable):
     ) -> None: ...
     def __iter__(self) -> t.Iterator[SecBuffer]:
         """Creates an iterable of the contained buffers."""
+
     def __len__(self) -> int:
         """Returns the number of buffers in this structure."""
+
     def __getitem__(self, key: int) -> SecBuffer:
         """Gets the buffer at the specified index."""
+
     @property
     def version(self) -> int:
         """The version number of the structure."""
@@ -144,15 +147,19 @@ class SecBuffer:
     @property
     def count(self) -> int:
         """The length of the buffer."""
+
     @property
     def data(self) -> bytes:
         """A copy of the buffer bytes."""
+
     @property
     def buffer_type(self) -> SecBufferType:
         """The buffer type."""
+
     @property
     def buffer_flags(self) -> SecBufferFlags:
         """The buffer flags."""
+
     def dangerous_get_view(self) -> memoryview:
         """The buffer memoryview.
 
@@ -204,18 +211,23 @@ class SecChannelBindings:
     @property
     def initiator_addr_type(self) -> int:
         """The initiator address type."""
+
     @property
     def initiator_addr(self) -> bytes | None:
         """A copy of the initiator address or None if not present."""
+
     @property
     def acceptor_addr_type(self) -> int:
         """The acceptor address type."""
+
     @property
     def acceptor_addr(self) -> bytes | None:
         """A copy of the acceptor address or None if not present."""
+
     @property
     def application_data(self) -> bytes | None:
         """A copy of the application data or None if not present."""
+
     def get_sec_buffer_copy(self) -> SecBuffer:
         """The SecBuffer value.
 
@@ -232,6 +244,7 @@ class SecChannelBindings:
         Returns:
             SecBuffer: The security buffer with the copied memory.
         """
+
     def dangerous_get_sec_buffer(self) -> SecBuffer:
         """The SecBuffer value.
 

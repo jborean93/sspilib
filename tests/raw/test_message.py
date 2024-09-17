@@ -153,6 +153,7 @@ def test_verify_failure(
     assert e.value.winerror == -2146893041  # SEC_E_MESSAGE_ALTERED
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Encryption not working sspi-rs")
 def test_encrypt_and_decrypt(
     authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:

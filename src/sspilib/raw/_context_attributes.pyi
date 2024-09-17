@@ -44,18 +44,23 @@ class SecPkgContextPackageInfo(SecPkgContext):
     @property
     def capabilities(self) -> SecurityPackageCapability:
         """Set of capabilities of the security package."""
+
     @property
     def version(self) -> int:
         """The version of the package."""
+
     @property
     def rpcid(self) -> int:
         """The DCE RPC identifier if appropriate."""
+
     @property
     def max_token(self) -> int:
         """The maximum size, in bytes, of the token."""
+
     @property
     def name(self) -> str:
         """The name of the security package."""
+
     @property
     def comment(self) -> str:
         """Additional information about the security package."""
@@ -92,12 +97,15 @@ class SecPkgContextSizes(SecPkgContext):
     @property
     def max_token(self) -> int:
         """Maximum security token sizes."""
+
     @property
     def max_signature(self) -> int:
         """Maximum signature size."""
+
     @property
     def block_size(self) -> int:
         """Preferred integral size of messages."""
+
     @property
     def security_trailer(self) -> int:
         """Size of the security trailer appended to messages."""

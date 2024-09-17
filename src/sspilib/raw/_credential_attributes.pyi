@@ -44,9 +44,11 @@ class SecPkgCredKdcProxySettings(SecPkgCred):
     @property
     def version(self) -> int:
         """The version of the internal structure."""
+
     @property
     def flags(self) -> KdcProxySettingsFlags:
         """Flags for the Kerberos proxy settings."""
+
     @property
     def proxy_server(self) -> str | None:
         """The proxy server value."""
