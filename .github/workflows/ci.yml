@@ -81,7 +81,7 @@ jobs:
         rm sspilib-*.tar.gz
 
     - name: build wheel
-      uses: pypa/cibuildwheel@v2.16.5
+      uses: pypa/cibuildwheel@v2.21.0
       env:
         CIBW_ARCHS: all
         CIBW_TEST_SKIP: '*_arm64'
@@ -116,6 +116,7 @@ jobs:
         - '3.10'
         - '3.11'
         - '3.12'
+        - '3.13.0-rc.2'
         python-arch:
         - x86
         - x64

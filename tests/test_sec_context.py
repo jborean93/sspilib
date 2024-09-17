@@ -83,6 +83,7 @@ def test_sec_context_signatures(
     c_ctx.verify(server_data, s_signature)
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Encryption not working in sspi-rs")
 def test_wrap_with_bytearray(
     authenticated_contexts: tuple[sspilib.ClientSecurityContext, sspilib.ServerSecurityContext],
 ) -> None:
@@ -105,6 +106,7 @@ def test_wrap_with_bytearray(
     assert bytes(b_wrapped_data) != wrapped_data
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Encryption not working in sspi-rs")
 def test_wrap_with_writable_memoryview(
     authenticated_contexts: tuple[sspilib.ClientSecurityContext, sspilib.ServerSecurityContext],
 ) -> None:
@@ -127,6 +129,7 @@ def test_wrap_with_writable_memoryview(
     assert bytes(b_wrapped_data) != wrapped_data
 
 
+@pytest.mark.skipif(os.name != "nt", reason="Encryption not working in sspi-rs")
 def test_wrap_with_readonly_memoryview(
     authenticated_contexts: tuple[sspilib.ClientSecurityContext, sspilib.ServerSecurityContext],
 ) -> None:

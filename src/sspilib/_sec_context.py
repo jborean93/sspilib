@@ -293,8 +293,7 @@ class SecurityContext(raw.CtxtHandle, metaclass=abc.ABCMeta):
         self,
         input_buffers: raw.SecBufferDesc | None,
         output_buffers: raw.SecBufferDesc | None,
-    ) -> tuple[int, int]:
-        ...
+    ) -> tuple[int, int]: ...
 
     def _get_secbuffer_data(
         self,

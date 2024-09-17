@@ -95,15 +95,19 @@ class WinNTAuthIdentity(AuthIdentity):
     @property
     def username(self) -> str | None:
         """The identity username."""
+
     @property
     def domain(self) -> str | None:
         """The identity domain."""
+
     @property
     def password(self) -> str | None:
         """The identity password."""
+
     @property
     def flags(self) -> WinNTAuthFlags:
         """Custom flags associated with the identity."""
+
     @property
     def package_list(self) -> str | None:
         """A comma-separated list of security packages that are available to the Negotiate provider."""
