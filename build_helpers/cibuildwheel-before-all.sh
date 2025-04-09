@@ -3,7 +3,7 @@ set -ex
 # sspi-rs doesn't have versions, this just needs to be bumped when new changes
 # are needed.
 # https://github.com/Devolutions/sspi-rs
-DEVOLUTIONS_COMMIT_ID="98e34308377877a6601a07f39da8c329a1e6b08e"
+DEVOLUTIONS_COMMIT_ID="d7b9ff6ffd2157c2f40953c5afc645a7ae203a1e"
 
 # Aligns to a release on https://github.com/unicode-org/icu/tree/main
 ICU_VERSION="73.2"
