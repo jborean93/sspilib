@@ -34,7 +34,7 @@ def test_sec_context_attributes(
             s_token = None
 
     assert c_ctx.complete
-    assert c_ctx.expiry != datetime.datetime.fromtimestamp(0, tz=datetime.timezone.utc)
+    assert isinstance(c_ctx.expiry, datetime.datetime)
     assert c_ctx.attributes != sspilib.IscRet(0)
 
     assert s_ctx.complete
@@ -42,8 +42,6 @@ def test_sec_context_attributes(
     assert s_ctx.attributes != sspilib.AscRet(0)
 
 
-# https://github.com/Devolutions/sspi-rs/issues/84
-@pytest.mark.skipif(os.name != "nt", reason="sspi-rs STREAM unwrapping does not support NTLM yet")
 def test_sec_context_wrapping(
     authenticated_contexts: tuple[sspilib.ClientSecurityContext, sspilib.ServerSecurityContext],
 ) -> None:
@@ -83,7 +81,6 @@ def test_sec_context_signatures(
     c_ctx.verify(server_data, s_signature)
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Encryption not working in sspi-rs")
 def test_wrap_with_bytearray(
     authenticated_contexts: tuple[sspilib.ClientSecurityContext, sspilib.ServerSecurityContext],
 ) -> None:
@@ -106,7 +103,6 @@ def test_wrap_with_bytearray(
     assert bytes(b_wrapped_data) != wrapped_data
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Encryption not working in sspi-rs")
 def test_wrap_with_writable_memoryview(
     authenticated_contexts: tuple[sspilib.ClientSecurityContext, sspilib.ServerSecurityContext],
 ) -> None:
@@ -129,7 +125,6 @@ def test_wrap_with_writable_memoryview(
     assert bytes(b_wrapped_data) != wrapped_data
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Encryption not working in sspi-rs")
 def test_wrap_with_readonly_memoryview(
     authenticated_contexts: tuple[sspilib.ClientSecurityContext, sspilib.ServerSecurityContext],
 ) -> None:

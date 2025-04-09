@@ -153,7 +153,6 @@ def test_verify_failure(
     assert e.value.winerror == -2146893041  # SEC_E_MESSAGE_ALTERED
 
 
-@pytest.mark.skipif(os.name != "nt", reason="Encryption not working sspi-rs")
 def test_encrypt_and_decrypt(
     authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
@@ -298,8 +297,6 @@ def test_decrypt_message_failure(
     assert e.value.winerror == -2146893041  # SEC_E_MESSAGE_ALTERED
 
 
-# https://github.com/Devolutions/sspi-rs/issues/84
-@pytest.mark.skipif(os.name != "nt", reason="SECBUFFER_STREAM not support with NTLM in sspi-rs")
 def test_encrypt_and_decrypt_stream(
     authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
@@ -484,8 +481,6 @@ def test_encrypt_winrm(
     assert bytes(in_data) == in_message[1].data
 
 
-# https://github.com/Devolutions/sspi-rs/issues/120
-@pytest.mark.skipif(os.name != "nt", reason="No READONLY buffer support in sspi-rs")
 @pytest.mark.parametrize(
     ["sign_header"],
     [
@@ -497,6 +492,9 @@ def test_encrypt_dce(
     sign_header: bool,
     authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
+    if os.name != "nt" and not sign_header:
+        pytest.skip(reason="sspi-rs fails to decrypt the payloads with SECBUFFER_READONLY")
+
     buffer_flags = (
         sr.SecBufferFlags.SECBUFFER_READONLY_WITH_CHECKSUM if sign_header else sr.SecBufferFlags.SECBUFFER_READONLY
     )
