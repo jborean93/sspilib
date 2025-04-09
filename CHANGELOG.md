@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.0 - TBD
+
++ Require Python 3.9 or newer (dropped 3.8)
+
 ## 0.2.0 - 2024-10-03
 
 + **Breaking Change** - The constructor arguments for `sspi.ClientSecurityContext` and `sspi.SeverSecurityContext` have made the `credential` argument non-optional and moved to the first positional argument

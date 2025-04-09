@@ -6,7 +6,6 @@
 from __future__ import annotations
 
 import ctypes
-import ctypes.util
 import os
 import pathlib
 import platform
