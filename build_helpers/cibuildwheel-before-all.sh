@@ -64,25 +64,7 @@ make -j${CPUS}
 
 popd
 
-if [ x"${SSPI_BUILD_MACOS_AARCH64:-}" = "xtrue" ]; then
-    mkdir -p "${SSPILIB_PATH}/icu-arm64"
-    pushd "${SSPILIB_PATH}/icu-arm64"
-
-    CFLAGS="${ICU_CFLAGS} -arch arm64" CXXFLAGS="${ICU_CXXFLAGS} ${CFLAGS}" \
-        "${SSPILIB_PATH}/icu/source/configure" \
-        "${ICU_CONFIGURE_FLAGS[@]}" \
-        --disable-tools \
-        --host=arm-apple-darwin \
-        --with-cross-build="${SSPILIB_PATH}/icu-native"
-
-    make -j${CPUS}
-
-    popd
-
-    cp "${SSPILIB_PATH}"/icu-arm64/lib/*.a "${SSPILIB_LIB_PATH}/"
-else
-    cp "${SSPILIB_PATH}"/icu-native/lib/*.a "${SSPILIB_LIB_PATH}/"
-fi
+cp "${SSPILIB_PATH}"/icu-native/lib/*.a "${SSPILIB_LIB_PATH}/"
 
 echo "Copying header files to shared include dir"
 cp -R "${SSPILIB_PATH}"/icu/source/common/* "${CPATH}"
@@ -118,12 +100,6 @@ SSPI_RS_OPTIONS=(
     "--release"
 )
 SSPI_RS_TARGET_DIR="release"
-
-if [ x"${SSPI_BUILD_MACOS_AARCH64:-}" = "xtrue" ]; then
-    rustup target add aarch64-apple-darwin
-    SSPI_RS_OPTIONS+=("--target=aarch64-apple-darwin")
-    SSPI_RS_TARGET_DIR="aarch64-apple-darwin/release"
-fi
 
 echo "Compiling sspi-rs release library"
 cargo build "${SSPI_RS_OPTIONS[@]}"

@@ -56,10 +56,10 @@ def test_get_inbound_with_default_context() -> None:
             "WinNTAuthIdentity(username='username', domain='DOMAIN', password='pass', flags=2, package_list=None)",
         ),
         (
-            "user\U0001F4A9",
-            "DOMAIN\U0001F4A9",
-            "DOMAIN\U0001F4A9\\user\U0001F4A9",
-            "WinNTAuthIdentity(username='user\U0001F4A9', domain='DOMAIN\U0001F4A9', password='pass', flags=2, package_list=None)",
+            "user\U0001f4a9",
+            "DOMAIN\U0001f4a9",
+            "DOMAIN\U0001f4a9\\user\U0001f4a9",
+            "WinNTAuthIdentity(username='user\U0001f4a9', domain='DOMAIN\U0001f4a9', password='pass', flags=2, package_list=None)",
         ),
     ],
     ids=[

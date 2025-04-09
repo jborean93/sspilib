@@ -45,26 +45,68 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - os: macOS-12
-          version: cp*-macosx_x86_64
-          artifact_name: macosx_x86_64
-        - os: macOS-12
-          version: cp*-macosx_arm64
-          artifact_name: macosx_arm64
+        - os: macOS-13
+          version: cp313-macosx_x86_64
+        - os: macOS-14
+          version: cp313-macosx_arm64
+        - os: macOS-13
+          version: cp312-macosx_x86_64
+        - os: macOS-14
+          version: cp312-macosx_arm64
+        - os: macOS-13
+          version: cp311-macosx_x86_64
+        - os: macOS-14
+          version: cp311-macosx_arm64
+        - os: macOS-13
+          version: cp310-macosx_x86_64
+        - os: macOS-14
+          version: cp310-macosx_arm64
+        - os: macOS-13
+          version: cp39-macosx_x86_64
+        - os: macOS-14
+          version: cp39-macosx_arm64
 
         - os: ubuntu-latest
-          version: cp*-manylinux_x86_64
-          artifact_name: manylinux_x86_64
+          version: cp313-manylinux_x86_64
+        - os: ubuntu-latest
+          version: cp312-manylinux_x86_64
+        - os: ubuntu-latest
+          version: cp311-manylinux_x86_64
+        - os: ubuntu-latest
+          version: cp310-manylinux_x86_64
+        - os: ubuntu-latest
+          version: cp39-manylinux_x86_64
 
         - os: windows-2022
-          version: cp*-win_amd64
-          artifact_name: win_amd64
+          version: cp313-win_amd64
         - os: windows-2022
-          version: cp*-win_arm64
-          artifact_name: win_arm64
+          version: cp313-win_arm64
         - os: windows-2022
-          version: cp*-win32
-          artifact_name: win_win32
+          version: cp313-win32
+        - os: windows-2022
+          version: cp312-win_amd64
+        - os: windows-2022
+          version: cp312-win_arm64
+        - os: windows-2022
+          version: cp312-win32
+        - os: windows-2022
+          version: cp311-win_amd64
+        - os: windows-2022
+          version: cp311-win_arm64
+        - os: windows-2022
+          version: cp311-win32
+        - os: windows-2022
+          version: cp310-win_amd64
+        - os: windows-2022
+          version: cp310-win_arm64
+        - os: windows-2022
+          version: cp310-win32
+        - os: windows-2022
+          version: cp39-win_amd64
+        - os: windows-2022
+          version: cp39-win_arm64
+        - os: windows-2022
+          version: cp39-win32
 
     steps:
     - uses: actions/download-artifact@v4
@@ -81,20 +123,20 @@ jobs:
         rm sspilib-*.tar.gz
 
     - name: build wheel
-      uses: pypa/cibuildwheel@v2.21.2
+      uses: pypa/cibuildwheel@v2.23.2
       env:
-        CIBW_ARCHS: all
-        CIBW_TEST_SKIP: '*_arm64'
+        CIBW_ARCHS: ${{ fromJSON('["auto", "ARM64"]')[endsWith(matrix.version, '-win_arm64')] }}
+        CIBW_TEST_SKIP: '*-win_arm64'
         CIBW_BUILD: ${{ matrix.version }}
         CIBW_BUILD_VERBOSITY: 1
         CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease || 'false' }}
-        SSPI_BUILD_MACOS_AARCH64: ${{ fromJSON('["", "true"]')[matrix.version == 'cp*-macosx_arm64'] }}
-        SSPI_SKIP_MODULE_CHECK: ${{ fromJSON('["", "true"]')[matrix.version == 'cp*-macosx_arm64' || matrix.version == 'cp*-win_arm64'] }}
+        MACOSX_DEPLOYMENT_TARGET: '10.12'  # rustc has a min on 10.12
+        SSPI_SKIP_MODULE_CHECK: ${{ fromJSON('["", "true"]')[endsWith(matrix.version, '-win_arm64')] }}
 
     - uses: actions/upload-artifact@v4
       with:
         path: ./wheelhouse/*.whl
-        name: artifact-wheel-${{ matrix.artifact_name }}
+        name: artifact-wheel-${{ matrix.version }}
 
   test:
     name: test
@@ -107,25 +149,31 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - macOS-12
+        - macOS-latest
         - ubuntu-latest
         - windows-latest
         python-version:
-        - 3.8
         - 3.9
         - '3.10'
         - '3.11'
         - '3.12'
-        - '3.13.0-rc.3'
+        - '3.13'
         python-arch:
+        - arm64
         - x86
         - x64
 
         exclude:
-        - os: macOS-12
-          python-arch: x86
+        - os: windows-latest
+          python-arch: arm64
+        - os: ubuntu-latest
+          python-arch: arm64
         - os: ubuntu-latest
           python-arch: x86
+        - os: macOS-latest
+          python-arch: x86
+        - os: macOS-latest
+          python-arch: x64
 
     steps:
     - uses: actions/checkout@v4
