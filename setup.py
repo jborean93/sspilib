@@ -53,6 +53,7 @@ if not SKIP_EXTENSIONS:
             ("UNICODE", "1"),
             ("_UNICODE", "1"),
             ("SECURITY_WIN32", "1"),
+            ("_SEC_WINNT_AUTH_TYPES", "1"),
         ]
         extra_compile_args = []
         sspi_lib = "Secur32"

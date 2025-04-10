@@ -68,3 +68,10 @@ cdef extern from "python_sspi.h":
     ctypedef SECURITY_INTEGER *PSECURITY_INTEGER
     ctypedef SECURITY_INTEGER TimeStamp
     ctypedef SECURITY_INTEGER *PTimeStamp
+
+    cdef struct _GUID:
+        unsigned int  Data1
+        unsigned short Data2
+        unsigned short Data3
+        unsigned char  Data4[8]
+    ctypedef _GUID GUID
