@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.3.0 - TBD
+## 0.3.0 - 2025-04-11
 
 + Require Python 3.9 or newer (dropped 3.8)
 + Update `sspi-rs` to `0.15.4`
