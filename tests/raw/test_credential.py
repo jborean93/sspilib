@@ -146,3 +146,75 @@ def test_fail_with_invalid_package_name() -> None:
     else:
         # https://github.com/Devolutions/sspi-rs/issues/170
         assert e.value.winerror == -2146892963  # SEC_E_INVALID_PARAMETER
+
+
+@pytest.mark.parametrize(
+    ["username", "domain", "package_list", "expected_str", "expected_repr"],
+    [
+        (
+            "username",
+            None,
+            None,
+            "WinNTAuthIdentityPackedCredential d587aae8-f78f-4455-a112-c934beee7ce1 for username",
+            "WinNTAuthIdentityPackedCredential(credential_type=UUID('d587aae8-f78f-4455-a112-c934beee7ce1'), credential=b'foo', username='username', domain=None, flags=2, package_list=None)",
+        ),
+        (
+            "username@DOMAIN.COM",
+            None,
+            None,
+            "WinNTAuthIdentityPackedCredential d587aae8-f78f-4455-a112-c934beee7ce1 for username@DOMAIN.COM",
+            "WinNTAuthIdentityPackedCredential(credential_type=UUID('d587aae8-f78f-4455-a112-c934beee7ce1'), credential=b'foo', username='username@DOMAIN.COM', domain=None, flags=2, package_list=None)",
+        ),
+        (
+            "username",
+            "DOMAIN",
+            None,
+            "WinNTAuthIdentityPackedCredential d587aae8-f78f-4455-a112-c934beee7ce1 for DOMAIN\\username",
+            "WinNTAuthIdentityPackedCredential(credential_type=UUID('d587aae8-f78f-4455-a112-c934beee7ce1'), credential=b'foo', username='username', domain='DOMAIN', flags=2, package_list=None)",
+        ),
+        (
+            "user\U0001f4a9",
+            "DOMAIN\U0001f4a9",
+            None,
+            "WinNTAuthIdentityPackedCredential d587aae8-f78f-4455-a112-c934beee7ce1 for DOMAIN\U0001f4a9\\user\U0001f4a9",
+            "WinNTAuthIdentityPackedCredential(credential_type=UUID('d587aae8-f78f-4455-a112-c934beee7ce1'), credential=b'foo', username='user\U0001f4a9', domain='DOMAIN\U0001f4a9', flags=2, package_list=None)",
+        ),
+        (
+            None,
+            None,
+            "kerberos,!ntlm",
+            "WinNTAuthIdentityPackedCredential d587aae8-f78f-4455-a112-c934beee7ce1",
+            "WinNTAuthIdentityPackedCredential(credential_type=UUID('d587aae8-f78f-4455-a112-c934beee7ce1'), credential=b'foo', username=None, domain=None, flags=2, package_list='kerberos,!ntlm')",
+        ),
+    ],
+    ids=[
+        "username_only",
+        "username_domain_upn",
+        "username_domain_netbios",
+        "unicode_surrogates",
+        "package_list_no_username",
+    ],
+)
+def test_win_nt_auth_identity_packed_credential_packing(
+    username: str | None,
+    domain: str | None,
+    package_list: str | None,
+    expected_str: str,
+    expected_repr: str,
+) -> None:
+    auth_identity = sr.WinNTAuthIdentityPackedCredential(
+        sr.WinNTAuthCredentialType.SEC_WINNT_AUTH_DATA_TYPE_KEYTAB,
+        b"foo",
+        username=username,
+        domain=domain,
+        package_list=package_list,
+    )
+
+    assert auth_identity.credential_type == sr.WinNTAuthCredentialType.SEC_WINNT_AUTH_DATA_TYPE_KEYTAB
+    assert auth_identity.credential == b"foo"
+    assert auth_identity.username == username
+    assert auth_identity.domain == domain
+    assert auth_identity.package_list == package_list
+    assert auth_identity.flags == sr.WinNTAuthFlags.SEC_WINNT_AUTH_IDENTITY_UNICODE
+    assert str(auth_identity) == expected_str, f"'{auth_identity}' != '{expected_str}'"
+    assert repr(auth_identity) == expected_repr, f"'{auth_identity!r}' != '{expected_repr}'"

@@ -3,6 +3,10 @@
 
 from __future__ import annotations
 
+import os
+
+import pytest
+
 import sspilib
 
 
@@ -26,5 +30,26 @@ def test_cred_username_upn() -> None:
 
 def test_cred_username_domain() -> None:
     cred = sspilib.UserCredential("user", domain="domain")
+    assert str(cred) == "domain\\user - Negotiate"
+    assert cred.username == "domain\\user"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="sspi-rs does not support keytab credentials")
+def test_keytab_username_no_domain() -> None:
+    cred = sspilib.KeytabCredential("user", b"foo")
+    assert str(cred) == "user - Negotiate"
+    assert cred.username == "user"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="sspi-rs does not support keytab credentials")
+def test_keytab_username_upn() -> None:
+    cred = sspilib.KeytabCredential("user@DOMAIN.COM", b"foo")
+    assert str(cred) == "user@DOMAIN.COM - Negotiate"
+    assert cred.username == "user@DOMAIN.COM"
+
+
+@pytest.mark.skipif(os.name != "nt", reason="sspi-rs does not support keytab credentials")
+def test_keytab_username_domain() -> None:
+    cred = sspilib.KeytabCredential("user", b"foo", domain="domain")
     assert str(cred) == "domain\\user - Negotiate"
     assert cred.username == "domain\\user"

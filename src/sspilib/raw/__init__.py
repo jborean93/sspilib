@@ -18,8 +18,10 @@ from ._credential import (
     AuthIdentity,
     CredentialUse,
     CredHandle,
+    WinNTAuthCredentialType,
     WinNTAuthFlags,
     WinNTAuthIdentity,
+    WinNTAuthIdentityPackedCredential,
     acquire_credentials_handle,
 )
 from ._credential_attributes import (
@@ -100,8 +102,10 @@ __all__ = [
     "SecurityPackageCapability",
     "TargetDataRep",
     "WindowsError",
+    "WinNTAuthCredentialType",
     "WinNTAuthFlags",
     "WinNTAuthIdentity",
+    "WinNTAuthIdentityPackedCredential",
     "accept_security_context",
     "acquire_credentials_handle",
     "complete_auth_token",

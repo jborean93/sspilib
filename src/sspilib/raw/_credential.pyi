@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import enum
 import typing as t
+import uuid
 
 class CredentialUse(enum.IntFlag):
     """CredHandle Usage Flags for :meth:`acquire_credentials_handle`."""
@@ -23,6 +24,19 @@ class CredentialUse(enum.IntFlag):
 
     SECPKG_CRED_PROCESS_POLICY_ONLY = ...
     """Process server policy."""
+
+class WinNTAuthCredentialType:
+    """Known credential type UUID constants for WinNTAuthIdentityPackedCredential."""
+
+    SEC_WINNT_AUTH_DATA_TYPE_PASSWORD: uuid.UUID
+    SEC_WINNT_AUTH_DATA_TYPE_CERT: uuid.UUID
+    SEC_WINNT_AUTH_DATA_TYPE_CREDMAN_CERT: uuid.UUID
+    SEC_WINNT_AUTH_DATA_TYPE_NGC: uuid.UUID
+    SEC_WINNT_AUTH_DATA_TYPE_FIDO: uuid.UUID
+    SEC_WINNT_AUTH_DATA_TYPE_KEYTAB: uuid.UUID
+    SEC_WINNT_AUTH_DATA_TYPE_DELEGATION_TOKEN: uuid.UUID
+    SEC_WINNT_AUTH_DATA_TYPE_CSP_DATA: uuid.UUID
+    SEC_WINNT_AUTH_DATA_TYPE_SMARTCARD_CONTEXTS: uuid.UUID
 
 class WinNTAuthFlags(enum.IntFlag):
     SEC_WINNT_AUTH_IDENTITY_ANSI = ...
@@ -103,6 +117,78 @@ class WinNTAuthIdentity(AuthIdentity):
     @property
     def password(self) -> str | None:
         """The identity password."""
+
+    @property
+    def flags(self) -> WinNTAuthFlags:
+        """Custom flags associated with the identity."""
+
+    @property
+    def package_list(self) -> str | None:
+        """A comma-separated list of security packages that are available to the Negotiate provider."""
+
+class WinNTAuthIdentityPackedCredential(AuthIdentity):
+    """A Windows NT packed credential.
+
+    This is an authentication data object that contains a packed credential
+    object with a specified type to identify the packed data. It can be used
+    with the ``auth_data`` kwarg on :meth:`acquire_credentials_handle` to
+    acquire a credential with scenarios outside of the standard
+    username/password combo exposed by :class:`WinNTAuthIdentity`.
+
+    The ``credential_type`` should be a UUID/GUID representing the type of
+    credential data being provided. See :class:`WinNTAuthCredentialType` for
+    some pre-defined constants already known.
+
+    The ``credential`` format depends on the ``credential_type`` specified. See
+    the Microsoft documentation for each of those types for more information.
+
+    The ``username`` and ``domain`` kwargs are optional and may or may not be
+    required depending on the credential type specified. If specifying a
+    username/principal in the Netlogon form ``DOMAIN\\username``, the
+    ``username`` arg is ``username`` and the ``domain`` arg is ``DOMAIN``. If
+    using the UPN form ``username@DOMAIN.COM``, the ``username`` is that UPN
+    value while ``domain`` is None.
+
+    The ``package_list`` kwarg can be used to restrict what security packages
+    the ``Negotiate`` provider can use with this credential. For example to
+    use the ``Negotiate`` provider but disable NTLM authentication the value
+    ``!ntlm`` can be specified.
+
+    Args:
+        credential_type: The credential type identifier as a GUID/UUID.
+        credential: The packed credential bytes.
+        username: The username to provide with the packed credential.
+        domain: The domain of the user.
+        flags: Custom flags associated with this identity.
+        package_list: Comma separated list of names of security packages that
+            are available to the Negotiate package.
+    """
+
+    def __init__(
+        self,
+        credential_type: uuid.UUID,
+        credential: bytes | bytearray | memoryview,
+        *,
+        username: str | None = None,
+        domain: str | None = None,
+        flags: WinNTAuthFlags | int = 0,
+        package_list: str | None = None,
+    ) -> None: ...
+    @property
+    def credential_type(self) -> uuid.UUID:
+        """The packed credential type."""
+
+    @property
+    def credential(self) -> bytes:
+        """The packed credential."""
+
+    @property
+    def username(self) -> str | None:
+        """The identity username."""
+
+    @property
+    def domain(self) -> str | None:
+        """The identity domain."""
 
     @property
     def flags(self) -> WinNTAuthFlags:
