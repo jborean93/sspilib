@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.3.1 - 2025-05-01
+
++ Fix build requirements with correct `setuptools` minimum of `>=77.0.0`
+
 ## 0.3.0 - 2025-04-11
 
 + Require Python 3.9 or newer (dropped 3.8)
