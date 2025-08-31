@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.4.0 - TBD
+## 0.4.0 - 2025-09-01
 
 + Updated build requirements to track a more immutable release structure
 + Add Python 3.14 wheels and official support
