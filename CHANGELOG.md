@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.4.0 - TBD
+
++ Updated build requirements to track a more immutable release structure
++ Add Python 3.14 wheels and official support
++ Update `sspi-rs` to `0.16.1`
+
 ## 0.3.1 - 2025-05-01
 
 + Fix build requirements with correct `setuptools` minimum of `>=77.0.0`

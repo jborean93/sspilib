@@ -18,18 +18,13 @@ lib::setup::python_requirements() {
     fi
 
     echo "Installing sspilib"
-    if [ "$(expr substr $(uname -s) 1 5)" == "MINGW" ]; then
-        DIST_LINK_PATH="$( echo "${PWD}/dist" | sed -e 's/^\///' -e 's/\//\\/g' -e 's/^./\0:/' )"
-    else
-        DIST_LINK_PATH="${PWD}/dist"
-    fi
 
     # Getting the version is important so that pip prioritises our local dist
     python -m pip install build
     SSPI_VERSION="$( grep -m 1 version pyproject.toml | tr -s ' ' | tr -d '"' | tr -d "'" | cut -d' ' -f3 )"
 
     python -m pip install sspilib=="${SSPI_VERSION}" \
-        --find-links "file://${DIST_LINK_PATH}" \
+        --find-links dist \
         --verbose
 
     echo "Installing dev dependencies"

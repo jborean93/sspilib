@@ -17,11 +17,11 @@ jobs:
     name: build sdist
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - uses: actions/setup-python@v5
       with:
-        python-version: 3.9
+        python-version: 3.13
 
     - name: build sdist
       run: |
@@ -46,6 +46,12 @@ jobs:
       matrix:
         include:
         - os: macOS-13
+          version: cp314-macosx_x86_64
+          prerelease: true
+        - os: macOS-14
+          version: cp314-macosx_arm64
+          prerelease: true
+        - os: macOS-13
           version: cp313-macosx_x86_64
         - os: macOS-14
           version: cp313-macosx_arm64
@@ -67,6 +73,9 @@ jobs:
           version: cp39-macosx_arm64
 
         - os: ubuntu-latest
+          version: cp314-manylinux_x86_64
+          prerelease: true
+        - os: ubuntu-latest
           version: cp313-manylinux_x86_64
         - os: ubuntu-latest
           version: cp312-manylinux_x86_64
@@ -78,38 +87,47 @@ jobs:
           version: cp39-manylinux_x86_64
 
         - os: windows-2022
-          version: cp313-win_amd64
+          version: cp314-win_amd64
+          prerelease: true
+        - os: windows-11-arm
+          version: cp314-win_arm64
+          prerelease: true
         - os: windows-2022
+          version: cp314-win32
+          prerelease: true
+        - os: windows-2022
+          version: cp313-win_amd64
+        - os: windows-11-arm
           version: cp313-win_arm64
         - os: windows-2022
           version: cp313-win32
         - os: windows-2022
           version: cp312-win_amd64
-        - os: windows-2022
+        - os: windows-11-arm
           version: cp312-win_arm64
         - os: windows-2022
           version: cp312-win32
         - os: windows-2022
           version: cp311-win_amd64
-        - os: windows-2022
+        - os: windows-11-arm
           version: cp311-win_arm64
         - os: windows-2022
           version: cp311-win32
         - os: windows-2022
           version: cp310-win_amd64
-        - os: windows-2022
+        - os: windows-11-arm
           version: cp310-win_arm64
         - os: windows-2022
           version: cp310-win32
         - os: windows-2022
           version: cp39-win_amd64
-        - os: windows-2022
+        - os: windows-11-arm
           version: cp39-win_arm64
         - os: windows-2022
           version: cp39-win32
 
     steps:
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v5
       with:
         name: artifact-sdist
         path: ./
@@ -123,15 +141,12 @@ jobs:
         rm sspilib-*.tar.gz
 
     - name: build wheel
-      uses: pypa/cibuildwheel@v2.23.2
+      uses: pypa/cibuildwheel@v3.1.4
       env:
-        CIBW_ARCHS: ${{ fromJSON('["auto", "ARM64"]')[endsWith(matrix.version, '-win_arm64')] }}
-        CIBW_TEST_SKIP: '*-win_arm64'
         CIBW_BUILD: ${{ matrix.version }}
         CIBW_BUILD_VERBOSITY: 1
         CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease || 'false' }}
         MACOSX_DEPLOYMENT_TARGET: '10.12'  # rustc has a min on 10.12
-        SSPI_SKIP_MODULE_CHECK: ${{ fromJSON('["", "true"]')[endsWith(matrix.version, '-win_arm64')] }}
 
     - uses: actions/upload-artifact@v4
       with:
@@ -152,12 +167,14 @@ jobs:
         - macOS-latest
         - ubuntu-latest
         - windows-latest
+        - windows-11-arm
         python-version:
         - 3.9
         - '3.10'
         - '3.11'
         - '3.12'
         - '3.13'
+        - '3.14-dev'
         python-arch:
         - arm64
         - x86
@@ -166,6 +183,16 @@ jobs:
         exclude:
         - os: windows-latest
           python-arch: arm64
+        - os: windows-11-arm
+          python-arch: x86
+        - os: windows-11-arm
+          python-version: 3.9
+        - os: windows-11-arm
+          python-version: '3.10'
+        - os: windows-11-arm
+          python-version: '3.14-dev'
+        - os: windows-11-arm
+          python-arch: x64
         - os: ubuntu-latest
           python-arch: arm64
         - os: ubuntu-latest
@@ -176,14 +203,14 @@ jobs:
           python-arch: x64
 
     steps:
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@v5
 
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.python-arch }}
 
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v5
       with:
         pattern: artifact-*
         merge-multiple: true
@@ -212,7 +239,7 @@ jobs:
       id-token: write
 
     steps:
-    - uses: actions/download-artifact@v4
+    - uses: actions/download-artifact@v5
       with:
         pattern: artifact-*
         merge-multiple: true
