@@ -124,4 +124,12 @@ The interface for `sspi-rs` is exactly the same as SSPI on Windows so the same c
 In saying this, compatibility with SSPI actual is not 100% there so use at your own risk.
 
 It is recommended to use a library that wraps GSSAPI on non-Windows platforms like [python-gssapi](https://github.com/pythongssapi/python-gssapi).
-There is no support for any other architectures on Linux except `x86_64` and as `sspi-rs` only supports glibc it cannot be used with musl based distributions like Alpine.
+There is no support for any other architectures on Linux except `x86_64` and `aarch64` (ARM64), and as `sspi-rs` only supports glibc it cannot be used with musl based distributions like Alpine.
+
+## Python Free-Threading (PEP 779)
+
+This library supports Python Free-Threading and will build free-threading-compatible extension files if installed under a free-threading interpreter.
+Python 3.14t is tested in CI and a wheel will be created for 3.14t+.
+Python 3.13t is not officially tested or supported but may or may not work.
+There is limited testing for free-threading in this library and it does not aim to be thread safe out of the box.
+If you encounter any issues or problems with this scenario please raise an issue and we can look at possible options to fix this.

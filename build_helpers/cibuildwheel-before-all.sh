@@ -3,10 +3,10 @@ set -ex
 # sspi-rs doesn't have versions, this just needs to be bumped when new changes
 # are needed.
 # https://github.com/Devolutions/sspi-rs
-DEVOLUTIONS_COMMIT_ID="7474617be07f2ee1952de6d0913c4fa64a61a354"
+DEVOLUTIONS_COMMIT_ID="96092892fb5b93e06393c5ca01abf91d9e3871b0"
 
 # Aligns to a release on https://github.com/unicode-org/icu/tree/main
-ICU_VERSION="73.2"
+ICU_VERSION="78.1"
 ICU_CONFIGURE_FLAGS=(
     "--enable-static=yes"
     "--enable-shared=no"
@@ -31,7 +31,7 @@ if [ "$( uname )" == "Darwin" ]; then
     LIB_EXT="dylib"
     CPUS="$( sysctl -n hw.ncpu )"
 
-    ICU_CXXFLAGS="-stdlib=libc++ -std=c++11"
+    ICU_CXXFLAGS="-stdlib=libc++ -std=c++17"
 else
     LIB_EXT="so"
     CPUS="$( nproc )"
@@ -47,10 +47,10 @@ fi
 wget \
     --no-verbose \
     --directory-prefix="${SSPILIB_PATH}" \
-    "https://github.com/unicode-org/icu/releases/download/release-$( echo ${ICU_VERSION} | sed 's/\./-/' )/icu4c-$( echo ${ICU_VERSION} | sed 's/\./_/' )-src.tgz"
+    "https://github.com/unicode-org/icu/releases/download/release-${ICU_VERSION}/icu4c-${ICU_VERSION}-sources.tgz"
 
 tar -xf \
-    "${SSPILIB_PATH}"/icu4c-*-src.tgz \
+    "${SSPILIB_PATH}"/icu4c-${ICU_VERSION}-sources.tgz \
     -C "${SSPILIB_PATH}"
 
 mkdir -p "${SSPILIB_PATH}/icu-native"

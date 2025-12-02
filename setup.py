@@ -9,6 +9,8 @@ import ctypes
 import os
 import pathlib
 import platform
+import sys
+import sysconfig
 import typing
 
 from Cython.Build import cythonize
@@ -18,6 +20,16 @@ SKIP_EXTENSIONS = os.environ.get("SSPI_SKIP_EXTENSIONS", "false").lower() == "tr
 SKIP_MODULE_CHECK = os.environ.get("SSPI_SKIP_MODULE_CHECK", "false").lower() == "true"
 CYTHON_LINETRACE = os.environ.get("SSPI_CYTHON_TRACING", "false").lower() == "true"
 SSPI_MAIN_LIB = os.environ.get("SSPI_MAIN_LIB", None)
+
+# Enable limited API for Python 3.11+
+USE_LIMITED_API = sys.version_info >= (3, 11)
+LIMITED_API_VERSION = 0x030B0000  # Python 3.11 ABI
+
+IS_FREE_THREADED = False
+if sysconfig.get_config_var("Py_GIL_DISABLED") == 1:
+    # Free-threaded Python does not support the limited API.
+    USE_LIMITED_API = False
+    IS_FREE_THREADED = True
 
 
 def make_extension(
@@ -77,6 +89,10 @@ if not SKIP_EXTENSIONS:
         print(f"Using {sspi_path} as SSPI module for platform checks")
         sspi = ctypes.CDLL(sspi_path)
 
+    if USE_LIMITED_API:
+        print(f"Building with Python Limited API (Py_LIMITED_API={hex(LIMITED_API_VERSION)}) for Stable ABI")
+        define_macros.append(("Py_LIMITED_API", LIMITED_API_VERSION))
+
     for e in [
         "context_attributes",
         "credential_attributes",
@@ -105,14 +121,25 @@ if not SKIP_EXTENSIONS:
             extra_compile_args=extra_compile_args,
             libraries=libraries,
             define_macros=define_macros,
+            py_limited_api=USE_LIMITED_API,
         )
         if ext:
             raw_extensions.append(ext)
+
+setup_options = {}
+if USE_LIMITED_API:
+    setup_options["bdist_wheel"] = {"py_limited_api": "cp311"}
+
+compiler_directives = {"linetrace": CYTHON_LINETRACE}
+if IS_FREE_THREADED:
+    # Enable free-threading support in Cython
+    compiler_directives["freethreading_compatible"] = True
 
 setup(
     ext_modules=cythonize(
         raw_extensions,
         language_level=3,
-        compiler_directives={"linetrace": CYTHON_LINETRACE},
+        compiler_directives=compiler_directives,
     ),
+    options=setup_options,
 )
