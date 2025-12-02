@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.5.0 - TBD
+## 0.5.0 - 2025-12-03
 
 + Build using the Stable ABI/Limited API with Python 3.11 and newer
 + Updated Cython build requirements to `3.2.1`
