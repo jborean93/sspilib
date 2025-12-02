@@ -122,3 +122,5 @@ ENV/
 
 # poetry
 poetry.lock
+
+uv.lock

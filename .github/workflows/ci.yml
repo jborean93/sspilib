@@ -17,9 +17,9 @@ jobs:
     name: build sdist
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: 3.13
 
@@ -30,7 +30,7 @@ jobs:
       env:
         SSPI_SKIP_EXTENSIONS: true
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       with:
         name: artifact-sdist
         path: ./dist/*.tar.gz
@@ -45,68 +45,53 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - os: macOS-13
-          version: cp314-macosx_x86_64
-          prerelease: true
-        - os: macOS-14
-          version: cp314-macosx_arm64
-          prerelease: true
-        - os: macOS-13
-          version: cp313-macosx_x86_64
-        - os: macOS-14
-          version: cp313-macosx_arm64
-        - os: macOS-13
-          version: cp312-macosx_x86_64
-        - os: macOS-14
-          version: cp312-macosx_arm64
-        - os: macOS-13
+        # Free-threading needs version specific
+        - os: macos-15-intel
+          version: cp314t-macosx_x86_64
+        - os: macos-15
+          version: cp314t-macosx_arm64
+        # 3.11+ can use the Limited API/Stable ABI
+        - os: macos-15-intel
           version: cp311-macosx_x86_64
-        - os: macOS-14
+        - os: macos-15
           version: cp311-macosx_arm64
-        - os: macOS-13
+        - os: macos-15-intel
           version: cp310-macosx_x86_64
-        - os: macOS-14
+        - os: macos-15
           version: cp310-macosx_arm64
-        - os: macOS-13
+        - os: macos-15-intel
           version: cp39-macosx_x86_64
-        - os: macOS-14
+        - os: macos-15
           version: cp39-macosx_arm64
 
+        # Free-threading needs version specific
         - os: ubuntu-latest
-          version: cp314-manylinux_x86_64
-          prerelease: true
-        - os: ubuntu-latest
-          version: cp313-manylinux_x86_64
-        - os: ubuntu-latest
-          version: cp312-manylinux_x86_64
+          version: cp314t-manylinux_x86_64
+        - os: ubuntu-22.04-arm
+          version: cp314t-manylinux_aarch64
+        # 3.11+ can use the Limited API/Stable ABI
         - os: ubuntu-latest
           version: cp311-manylinux_x86_64
+        - os: ubuntu-22.04-arm
+          version: cp311-manylinux_aarch64
         - os: ubuntu-latest
           version: cp310-manylinux_x86_64
+        - os: ubuntu-22.04-arm
+          version: cp310-manylinux_aarch64
         - os: ubuntu-latest
           version: cp39-manylinux_x86_64
+        - os: ubuntu-22.04-arm
+          version: cp39-manylinux_aarch64
 
+        # Free-threading needs version specific
         - os: windows-2022
-          version: cp314-win_amd64
-          prerelease: true
+          version: cp314t-win_amd64
         - os: windows-11-arm
-          version: cp314-win_arm64
-          prerelease: true
+          version: cp314t-win_arm64
         - os: windows-2022
-          version: cp314-win32
-          prerelease: true
-        - os: windows-2022
-          version: cp313-win_amd64
-        - os: windows-11-arm
-          version: cp313-win_arm64
-        - os: windows-2022
-          version: cp313-win32
-        - os: windows-2022
-          version: cp312-win_amd64
-        - os: windows-11-arm
-          version: cp312-win_arm64
-        - os: windows-2022
-          version: cp312-win32
+          version: cp314t-win32
+
+        # 3.11+ can use the Limited API/Stable ABI
         - os: windows-2022
           version: cp311-win_amd64
         - os: windows-11-arm
@@ -127,7 +112,7 @@ jobs:
           version: cp39-win32
 
     steps:
-    - uses: actions/download-artifact@v5
+    - uses: actions/download-artifact@v6
       with:
         name: artifact-sdist
         path: ./
@@ -141,14 +126,14 @@ jobs:
         rm sspilib-*.tar.gz
 
     - name: build wheel
-      uses: pypa/cibuildwheel@v3.1.4
+      uses: pypa/cibuildwheel@v3.3.0
       env:
         CIBW_BUILD: ${{ matrix.version }}
         CIBW_BUILD_VERBOSITY: 1
         CIBW_PRERELEASE_PYTHONS: ${{ matrix.prerelease || 'false' }}
         MACOSX_DEPLOYMENT_TARGET: '10.12'  # rustc has a min on 10.12
 
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v5
       with:
         path: ./wheelhouse/*.whl
         name: artifact-wheel-${{ matrix.version }}
@@ -164,8 +149,9 @@ jobs:
       fail-fast: false
       matrix:
         os:
-        - macOS-latest
+        - macos-latest
         - ubuntu-latest
+        - ubuntu-22.04-arm
         - windows-latest
         - windows-11-arm
         python-version:
@@ -174,7 +160,8 @@ jobs:
         - '3.11'
         - '3.12'
         - '3.13'
-        - '3.14-dev'
+        - '3.14'
+        - '3.14t'
         python-arch:
         - arm64
         - x86
@@ -183,34 +170,41 @@ jobs:
         exclude:
         - os: windows-latest
           python-arch: arm64
+
         - os: windows-11-arm
           python-arch: x86
         - os: windows-11-arm
-          python-version: 3.9
+          python-arch: x64
+        # <= 3.10 is not available on arm64 Windows
+        - os: windows-11-arm
+          python-version: '3.9'
         - os: windows-11-arm
           python-version: '3.10'
-        - os: windows-11-arm
-          python-version: '3.14-dev'
-        - os: windows-11-arm
-          python-arch: x64
+
         - os: ubuntu-latest
           python-arch: arm64
         - os: ubuntu-latest
           python-arch: x86
-        - os: macOS-latest
+
+        - os: ubuntu-22.04-arm
           python-arch: x86
-        - os: macOS-latest
+        - os: ubuntu-22.04-arm
+          python-arch: x64
+
+        - os: macos-latest
+          python-arch: x86
+        - os: macos-latest
           python-arch: x64
 
     steps:
-    - uses: actions/checkout@v5
+    - uses: actions/checkout@v6
 
-    - uses: actions/setup-python@v5
+    - uses: actions/setup-python@v6
       with:
         python-version: ${{ matrix.python-version }}
         architecture: ${{ matrix.python-arch }}
 
-    - uses: actions/download-artifact@v5
+    - uses: actions/download-artifact@v6
       with:
         pattern: artifact-*
         merge-multiple: true
@@ -224,7 +218,7 @@ jobs:
 
     - name: Upload Test Results
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v5
       with:
         name: Unit Test Results (${{ matrix.os }} ${{ matrix.python-version }}) ${{ matrix.python-arch }}
         path: ./junit/test-results.xml
@@ -239,7 +233,7 @@ jobs:
       id-token: write
 
     steps:
-    - uses: actions/download-artifact@v5
+    - uses: actions/download-artifact@v6
       with:
         pattern: artifact-*
         merge-multiple: true

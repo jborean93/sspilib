@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.0 - TBD
+
++ Build using the Stable ABI/Limited API with Python 3.11 and newer
++ Updated Cython build requirements to `3.2.1`
++ Added support for Python free-threading (`PEP 779`)
+  + PyPI will contain wheels for Python 3.14t and newer versions as they are released
+  + Python 3.13t is not supported or tested so may or may not work
++ Update `sspi-rs` to `0.18.4`
+  + Update `icu` used with `sspi-rs` on non-Windows to `78.1`
+
 ## 0.4.0 - 2025-09-01
 
 + Updated build requirements to track a more immutable release structure
