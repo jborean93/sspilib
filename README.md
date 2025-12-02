@@ -124,7 +124,7 @@ The interface for `sspi-rs` is exactly the same as SSPI on Windows so the same c
 In saying this, compatibility with SSPI actual is not 100% there so use at your own risk.
 
 It is recommended to use a library that wraps GSSAPI on non-Windows platforms like [python-gssapi](https://github.com/pythongssapi/python-gssapi).
-There is no support for any other architectures on Linux except `x86_64` and as `sspi-rs` only supports glibc it cannot be used with musl based distributions like Alpine.
+There is no support for any other architectures on Linux except `x86_64` and `aarch64` (ARM64), and as `sspi-rs` only supports glibc it cannot be used with musl based distributions like Alpine.
 
 ## Python Free-Threading (PEP 779)
 
