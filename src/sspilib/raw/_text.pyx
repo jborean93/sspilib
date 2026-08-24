@@ -15,7 +15,7 @@ cdef extern from "python_sspi.h":
 
     #include <unicode/ustring.h>
 
-    LPWSTR PyUnicode_AsWideCharStringShim(PyObject * unicode, Py_ssize_t *size)
+    LPWSTR Shim_PyUnicode_AsWideCharString(PyObject * unicode, Py_ssize_t *size)
     {
         Py_ssize_t utf32_size = 0;
         wchar_t * utf32_buffer = PyUnicode_AsWideCharString(unicode, &utf32_size);
@@ -62,7 +62,7 @@ cdef extern from "python_sspi.h":
         return utf16_buffer;
     }
 
-    PyObject *PyUnicode_FromWideCharShim(const LPWSTR w, Py_ssize_t size)
+    PyObject *Shim_PyUnicode_FromWideChar(const LPWSTR w, Py_ssize_t size)
     {
         // Get the number of UTF-32 codepoints needed for the input string.
         UErrorCode error_code = 0;
@@ -108,24 +108,24 @@ cdef extern from "python_sspi.h":
         return py_str;
     }
 
-    void PyMem_FreeShim(void *p)
+    void Shim_PyMem_Free(void *p)
     {
         free(p);
     }
 
     #else
 
-    LPWSTR PyUnicode_AsWideCharStringShim(PyObject * unicode, Py_ssize_t *size)
+    LPWSTR Shim_PyUnicode_AsWideCharString(PyObject * unicode, Py_ssize_t *size)
     {
         return PyUnicode_AsWideCharString(unicode, size);
     }
 
-    PyObject *PyUnicode_FromWideCharShim(const LPWSTR w, Py_ssize_t size)
+    PyObject *Shim_PyUnicode_FromWideChar(const LPWSTR w, Py_ssize_t size)
     {
         return PyUnicode_FromWideChar(w, size);
     }
 
-    void PyMem_FreeShim(void *p)
+    void Shim_PyMem_Free(void *p)
     {
         PyMem_Free(p);
     }
@@ -133,9 +133,9 @@ cdef extern from "python_sspi.h":
     #endif
     """
 
-    LPWSTR PyUnicode_AsWideCharStringShim(object unicode, Py_ssize_t *size)
-    PyObject *PyUnicode_FromWideCharShim(const LPWSTR w, Py_ssize_t size)
-    void PyMem_FreeShim(void *p)
+    LPWSTR Shim_PyUnicode_AsWideCharString(object unicode, Py_ssize_t *size)
+    PyObject *Shim_PyUnicode_FromWideChar(const LPWSTR w, Py_ssize_t size)
+    void Shim_PyMem_Free(void *p)
 
 
 cdef class WideCharString:
@@ -144,13 +144,13 @@ cdef class WideCharString:
 
     def __cinit__(WideCharString self, str value) -> None:
         if value is not None:
-            self.raw = PyUnicode_AsWideCharStringShim(value, &self.length)
+            self.raw = Shim_PyUnicode_AsWideCharString(value, &self.length)
             if self.raw == NULL:
                 raise MemoryError()
 
     def __dealloc__(WideCharString self) -> None:
         if self.raw != NULL:
-            PyMem_FreeShim(self.raw)
+            Shim_PyMem_Free(self.raw)
 
         self.raw = NULL
         self.length = 0
@@ -163,4 +163,4 @@ cdef str wide_char_to_str(
     if value == NULL:
         return "" if none_is_empty else None
 
-    return <object>PyUnicode_FromWideCharShim(value, size)
+    return <object>Shim_PyUnicode_FromWideChar(value, size)
