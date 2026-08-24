@@ -3,8 +3,10 @@
 ## 0.6.0 - TBD
 
 + Required Python 3.10 or newer (dropped 3.9)
-* Update wheels for CPython 3.15 and 3.15t
-* Updated Cython build requirements to `3.3.0`
++ Update wheels for CPython 3.15 and 3.15t
++ Updated Cython build requirements to `3.3.0`
++ Updated `sspi-rs` to `v2026.08.19.0`
+  + Updated `icu` used with `sspi-rs` on non-Windows to `78.3`
 
 ## 0.5.0 - 2025-12-03
 

@@ -816,8 +816,6 @@ def test_sec_exchange_with_negotiate_restricted_package() -> None:
     assert c_output_buffers[0].data == b""
 
 
-# https://github.com/Devolutions/sspi-rs/issues/171
-@pytest.mark.skipif(os.name != "nt", reason="sspi-rs does not support this scenario yet")
 def test_fail_with_negotiate_and_no_available_packages() -> None:
     spn = f"host/{socket.gethostname()}"
 
