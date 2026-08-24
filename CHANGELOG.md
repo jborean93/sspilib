@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.6.0 - TBD
+## 0.6.0 - 2026-08-24
 
 + Required Python 3.10 or newer (dropped 3.9)
 + Update wheels for CPython 3.15 and 3.15t
