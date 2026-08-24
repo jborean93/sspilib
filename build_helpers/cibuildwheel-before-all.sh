@@ -1,12 +1,10 @@
 set -ex
 
-# sspi-rs doesn't have versions, this just needs to be bumped when new changes
-# are needed.
 # https://github.com/Devolutions/sspi-rs
-DEVOLUTIONS_COMMIT_ID="96092892fb5b93e06393c5ca01abf91d9e3871b0"
+DEVOLUTIONS_VERSION_TAG="v2026.08.19.0"
 
 # Aligns to a release on https://github.com/unicode-org/icu/tree/main
-ICU_VERSION="78.1"
+ICU_VERSION="78.3"
 ICU_CONFIGURE_FLAGS=(
     "--enable-static=yes"
     "--enable-shared=no"
@@ -80,21 +78,21 @@ if [ $RC != 0 ]; then
     rustup update
 fi
 
-echo "Downloading sspi-rs at commit ${DEVOLUTIONS_COMMIT_ID}"
+echo "Downloading sspi-rs at version ${DEVOLUTIONS_VERSION_TAG}"
 wget \
     --no-verbose \
     --directory-prefix="${SSPILIB_PATH}" \
-    "https://github.com/Devolutions/sspi-rs/archive/${DEVOLUTIONS_COMMIT_ID}.zip"
+    "https://github.com/Devolutions/sspi-rs/archive/${DEVOLUTIONS_VERSION_TAG}.zip"
 
 echo "Extracting sspi-rs source code"
 unzip \
     -q \
     -d "${SSPILIB_PATH}" \
-    "${SSPILIB_PATH}/${DEVOLUTIONS_COMMIT_ID}.zip"
+    "${SSPILIB_PATH}/${DEVOLUTIONS_VERSION_TAG}.zip"
 
 SSPI_RS_OPTIONS=(
     "--manifest-path"
-    "${SSPILIB_PATH}/sspi-rs-${DEVOLUTIONS_COMMIT_ID}/Cargo.toml"
+    "${SSPILIB_PATH}/sspi-rs-${DEVOLUTIONS_VERSION_TAG:1}/Cargo.toml"
     "--package"
     "sspi-ffi"
     "--release"
@@ -104,5 +102,5 @@ SSPI_RS_TARGET_DIR="release"
 echo "Compiling sspi-rs release library"
 cargo build "${SSPI_RS_OPTIONS[@]}"
 
-cp "${SSPILIB_PATH}/sspi-rs-${DEVOLUTIONS_COMMIT_ID}/target/${SSPI_RS_TARGET_DIR}/libsspi.${LIB_EXT}" \
+cp "${SSPILIB_PATH}/sspi-rs-${DEVOLUTIONS_VERSION_TAG:1}/target/${SSPI_RS_TARGET_DIR}/libsspi.${LIB_EXT}" \
     "${SSPILIB_LIB_PATH}/"

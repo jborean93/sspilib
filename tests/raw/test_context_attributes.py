@@ -10,8 +10,7 @@ import pytest
 import sspilib.raw as sr
 
 
-# https://github.com/Devolutions/sspi-rs/issues/169
-@pytest.mark.skipif(os.name != "nt", reason="SECPKG_ATTR_NAMES is not implemented in sspi-rs")
+@pytest.mark.skipif(os.name != "nt", reason="SECPKG_ATTR_NAMES is implement but still fails with SEC_E_NO_CREDENTIALS")
 def test_query_names(
     authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
@@ -57,8 +56,6 @@ def test_query_package_info(
     assert repr(c_actual) == repr(s_actual)
 
 
-# https://github.com/Devolutions/sspi-rs/issues/168
-@pytest.mark.skipif(os.name != "nt", reason="SECPKG_ATTR_SESSION_KEY is not implemented in sspi-rs")
 def test_query_session_keys(
     authenticated_contexts: tuple[sr.CtxtHandle, sr.CtxtHandle],
 ) -> None:
