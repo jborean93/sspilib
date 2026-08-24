@@ -10,7 +10,7 @@ The high level interface is under the `sspilib` namespace whereas the low-level 
 
 ## Requirements
 
-* Python 3.9+
+* Python 3.10+
 
 More requirements are needed to compile the code from scratch but this library is shipped as a wheel so it isn't mandatory for installation.
 

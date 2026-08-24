@@ -63,10 +63,6 @@ jobs:
           version: cp310-macosx_x86_64
         - os: macos-15
           version: cp310-macosx_arm64
-        - os: macos-15-intel
-          version: cp39-macosx_x86_64
-        - os: macos-15
-          version: cp39-macosx_arm64
 
         # Free-threading needs version specific
         - os: ubuntu-latest
@@ -86,10 +82,6 @@ jobs:
           version: cp310-manylinux_x86_64
         - os: ubuntu-22.04-arm
           version: cp310-manylinux_aarch64
-        - os: ubuntu-latest
-          version: cp39-manylinux_x86_64
-        - os: ubuntu-22.04-arm
-          version: cp39-manylinux_aarch64
 
         # Free-threading needs version specific
         - os: windows-2022
@@ -118,12 +110,6 @@ jobs:
           version: cp310-win_arm64
         - os: windows-2022
           version: cp310-win32
-        - os: windows-2022
-          version: cp39-win_amd64
-        - os: windows-11-arm
-          version: cp39-win_arm64
-        - os: windows-2022
-          version: cp39-win32
 
     steps:
     - uses: actions/download-artifact@v8
@@ -169,7 +155,6 @@ jobs:
         - windows-latest
         - windows-11-arm
         python-version:
-        - 3.9
         - '3.10'
         - '3.11'
         - '3.12'
@@ -192,8 +177,6 @@ jobs:
         - os: windows-11-arm
           python-arch: x64
         # <= 3.10 is not available on arm64 Windows
-        - os: windows-11-arm
-          python-version: '3.9'
         - os: windows-11-arm
           python-version: '3.10'
 

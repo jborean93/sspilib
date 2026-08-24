@@ -2,6 +2,7 @@
 
 ## 0.6.0 - TBD
 
++ Required Python 3.10 or newer (dropped 3.9)
 * Update wheels for CPython 3.15 and 3.15t
 * Updated Cython build requirements to `3.3.0`
 
