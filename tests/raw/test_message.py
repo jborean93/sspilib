@@ -40,7 +40,7 @@ def test_sign_and_verify(
 
     assert bytes(in_token) != b"\x00" * sizes.security_trailer
     assert len(in_message[1].data) == in_message[1].count
-    assert bytes(in_token) == in_message[1].data
+    assert bytes(in_token[: in_message[1].count]) == in_message[1].data
 
     res = sr.verify_signature(
         authenticated_contexts[1],
@@ -54,7 +54,7 @@ def test_sign_and_verify(
     assert bytes(in_data) == in_message[0].data
 
     assert len(in_message[1].data) == in_message[1].count
-    assert bytes(in_token) == in_message[1].data
+    assert bytes(in_token[: in_message[1].count]) == in_message[1].data
 
     in_token = bytearray(sizes.security_trailer)
     in_data = bytearray(server_data)
@@ -77,7 +77,7 @@ def test_sign_and_verify(
 
     assert bytes(in_token) != b"\x00" * sizes.security_trailer
     assert len(in_message[1].data) == in_message[1].count
-    assert bytes(in_token) == in_message[1].data
+    assert bytes(in_token[: in_message[1].count]) == in_message[1].data
 
     res = sr.verify_signature(
         authenticated_contexts[0],
@@ -91,7 +91,7 @@ def test_sign_and_verify(
     assert bytes(in_data) == in_message[0].data
 
     assert len(in_message[1].data) == in_message[1].count
-    assert bytes(in_token) == in_message[1].data
+    assert bytes(in_token[: in_message[1].count]) == in_message[1].data
 
 
 @pytest.mark.skipif(os.name != "nt", reason="sspi-rs does not support signature functions")
@@ -180,7 +180,7 @@ def test_encrypt_and_decrypt(
 
     assert bytes(in_token) != b"\x00" * sizes.security_trailer
     assert len(in_message[0].data) == in_message[0].count
-    assert bytes(in_token) == in_message[0].data
+    assert bytes(in_token[: in_message[0].count]) == in_message[0].data
 
     assert bytes(in_data) != client_data
     assert len(in_message[1].data) == in_message[1].count
@@ -194,7 +194,7 @@ def test_encrypt_and_decrypt(
     assert res == 0
 
     assert len(in_message[0].data) == in_message[0].count
-    assert bytes(in_token) == in_message[0].data
+    assert bytes(in_token[: in_message[0].count]) == in_message[0].data
 
     assert bytes(in_data) == client_data
     assert len(in_message[1].data) == in_message[1].count
@@ -219,7 +219,7 @@ def test_encrypt_and_decrypt(
 
     assert bytes(in_token) != b"\x00" * sizes.security_trailer
     assert len(in_message[0].data) == in_message[0].count
-    assert bytes(in_token) == in_message[0].data
+    assert bytes(in_token[: in_message[0].count]) == in_message[0].data
 
     assert bytes(in_data) != server_data
     assert len(in_message[1].data) == in_message[1].count
@@ -233,7 +233,7 @@ def test_encrypt_and_decrypt(
     assert res == 0
 
     assert len(in_message[0].data) == in_message[0].count
-    assert bytes(in_token) == in_message[0].data
+    assert bytes(in_token[: in_message[0].count]) == in_message[0].data
 
     assert bytes(in_data) == server_data
     assert len(in_message[1].data) == in_message[1].count
@@ -322,7 +322,7 @@ def test_encrypt_and_decrypt_stream(
 
     assert bytes(in_token) != b"\x00" * sizes.security_trailer
     assert len(in_message[0].data) == in_message[0].count
-    assert bytes(in_token) == in_message[0].data
+    assert bytes(in_token[: in_message[0].count]) == in_message[0].data
 
     assert bytes(in_data) != client_data
     assert len(in_message[1].data) == in_message[1].count
@@ -368,7 +368,7 @@ def test_encrypt_and_decrypt_stream(
 
     assert bytes(in_token) != b"\x00" * sizes.security_trailer
     assert len(in_message[0].data) == in_message[0].count
-    assert bytes(in_token) == in_message[0].data
+    assert bytes(in_token[: in_message[0].count]) == in_message[0].data
 
     assert bytes(in_data) != server_data
     assert len(in_message[1].data) == in_message[1].count
@@ -423,7 +423,7 @@ def test_encrypt_winrm(
 
     assert bytes(in_token) != b"\x00" * sizes.security_trailer
     assert len(in_message[0].data) == in_message[0].count
-    assert bytes(in_token) == in_message[0].data
+    assert bytes(in_token[: in_message[0].count]) == in_message[0].data
 
     assert bytes(in_data) != client_data
     assert len(in_message[1].data) == in_message[1].count
@@ -437,7 +437,7 @@ def test_encrypt_winrm(
     assert res == 0
 
     assert len(in_message[0].data) == in_message[0].count
-    assert bytes(in_token) == in_message[0].data
+    assert bytes(in_token[: in_message[0].count]) == in_message[0].data
 
     assert bytes(in_data) == client_data
     assert len(in_message[1].data) == in_message[1].count
@@ -460,7 +460,7 @@ def test_encrypt_winrm(
 
     assert bytes(in_token) != b"\x00" * sizes.security_trailer
     assert len(in_message[0].data) == in_message[0].count
-    assert bytes(in_token) == in_message[0].data
+    assert bytes(in_token[: in_message[0].count]) == in_message[0].data
 
     assert bytes(in_data) != server_data
     assert len(in_message[1].data) == in_message[1].count
@@ -474,7 +474,7 @@ def test_encrypt_winrm(
     assert res == 0
 
     assert len(in_message[0].data) == in_message[0].count
-    assert bytes(in_token) == in_message[0].data
+    assert bytes(in_token[: in_message[0].count]) == in_message[0].data
 
     assert bytes(in_data) == server_data
     assert len(in_message[1].data) == in_message[1].count
@@ -541,7 +541,7 @@ def test_encrypt_dce(
 
     assert bytes(in_token) != b"\x00" * sizes.security_trailer
     assert len(in_message[3].data) == in_message[3].count
-    assert bytes(in_token) == in_message[3].data
+    assert bytes(in_token[: in_message[3].count]) == in_message[3].data
 
     res = sr.decrypt_message(
         authenticated_contexts[1],
@@ -563,7 +563,7 @@ def test_encrypt_dce(
     assert bytes(in_trailer) == in_message[2].data
 
     assert len(in_message[3].data) == in_message[3].count
-    assert bytes(in_token) == in_message[3].data
+    assert bytes(in_token[: in_message[3].count]) == in_message[3].data
 
     in_header = bytearray(server_header)
     in_data = bytearray(server_data)
@@ -598,7 +598,7 @@ def test_encrypt_dce(
 
     assert bytes(in_token) != b"\x00" * sizes.security_trailer
     assert len(in_message[3].data) == in_message[3].count
-    assert bytes(in_token) == in_message[3].data
+    assert bytes(in_token[: in_message[3].count]) == in_message[3].data
 
     res = sr.decrypt_message(
         authenticated_contexts[0],
@@ -620,4 +620,4 @@ def test_encrypt_dce(
     assert bytes(in_trailer) == in_message[2].data
 
     assert len(in_message[3].data) == in_message[3].count
-    assert bytes(in_token) == in_message[3].data
+    assert bytes(in_token[: in_message[3].count]) == in_message[3].data

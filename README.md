@@ -49,6 +49,16 @@ python -m pip install -e .
 From there an editor like VSCode can be used to make changes and run the test suite.
 To recompile the Cython files after a change run the `build_ext --inplace` command.
 
+The Kerberos and Negotiate tests authenticate with a Kerberos KDC and are skipped unless one is available.
+On Windows the CI runs them with a KDC from the [Obol](https://github.com/jborean93/PowerShell-Obol) PowerShell module through `build_helpers/run-with-kdc.ps1`.
+To run them locally, run the following from an elevated session.
+
+```powershell
+pwsh build_helpers/run-with-kdc.ps1 python -m pytest -v
+```
+
+These tests do not run on other platforms as `sspi-rs` cannot accept Kerberos tokens through SSPI or use keytab credentials.
+
 If building on Linux or macOS, a version of `libsspi` from [sspi-rs](https://github.com/Devolutions/sspi-rs) must be compiled with rust.
 A copy of `libicuuc` alongside its headers must be present during compile time.
 To compile `sspi-rs`, download the git repository and run the following.

@@ -22,8 +22,11 @@ def test_query_names(
     assert isinstance(s_actual, sr.SecPkgContextNames)
     assert isinstance(s_actual.username, str)
 
-    assert c_actual.username == s_actual.username
-    assert repr(c_actual) == repr(s_actual)
+    # The names can be in different formats, like user@REALM for a Kerberos
+    # initiator and REALM\user for the acceptor, but the user part is the same.
+    c_user = c_actual.username.split("@")[0].split("\\")[-1]
+    s_user = s_actual.username.split("@")[0].split("\\")[-1]
+    assert c_user.upper() == s_user.upper()
 
 
 def test_query_package_info(

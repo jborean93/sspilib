@@ -5,8 +5,6 @@ lib::setup::system_requirements() {
         echo "::group::Installing System Requirements"
     fi
 
-    echo "No system requirements required for Windows"
-
     if [ x"${GITHUB_ACTIONS}" = "xtrue" ]; then
         echo "::endgroup::"
     fi
@@ -54,11 +52,28 @@ lib::tests::run() {
         echo "::group::Running Tests"
     fi
 
-    python -m pytest \
-        -v \
+    PYTEST_ARGS=(
+        -v
         --junitxml junit/test-results.xml
+    )
+
+    # The Kerberos tests are Windows only, sspi-rs cannot accept Kerberos
+    # tokens or use keytab credentials. The Obol KDC runs in the pwsh process
+    # that starts pytest so it must wrap the whole run.
+    if lib::is_windows; then
+        echo "Running the tests with an Obol KDC for the Kerberos tests"
+        pwsh -NoProfile -NonInteractive -File build_helpers/run-with-kdc.ps1 \
+            python -m pytest "${PYTEST_ARGS[@]}"
+    else
+        echo "Running the tests without a KDC, the Kerberos tests will be skipped"
+        python -m pytest "${PYTEST_ARGS[@]}"
+    fi
 
     if [ x"${GITHUB_ACTIONS}" = "xtrue" ]; then
         echo "::endgroup::"
     fi
+}
+
+lib::is_windows() {
+    [ "${OS:-}" = "Windows_NT" ]
 }
