@@ -7,7 +7,7 @@ The end to end exchanges for Kerberos and Negotiate are covered by the
 protocol parametrized fixtures in conftest.py. These tests cover the Kerberos
 specific credential and failure scenarios. They need a KDC and are skipped
 unless the krb_env fixture finds one, run them through
-build_helpers/kerberos-env.ps1 which starts an Obol KDC. They only run on
+build_helpers/run-with-kdc.ps1 which starts an Obol KDC. They only run on
 Windows as sspi-rs cannot accept Kerberos tokens or use keytab credentials.
 """
 
@@ -43,10 +43,19 @@ def exchange(
 
 
 def test_kerberos_mutual_auth(krb_env: KerberosEnvironment) -> None:
-    c_cred = sspilib.UserCredential(krb_env.user, krb_env.password, protocol="Kerberos")
-    s_cred = sspilib.KeytabCredential(krb_env.service, krb_env.service_keytab, protocol="Kerberos", usage="accept")
+    c_cred = sspilib.UserCredential(
+        krb_env.initiator_username,
+        krb_env.initiator_password,
+        protocol="Kerberos",
+    )
+    s_cred = sspilib.KeytabCredential(
+        krb_env.acceptor_spn,
+        krb_env.acceptor_keytab,
+        protocol="Kerberos",
+        usage="accept",
+    )
 
-    c_ctx = sspilib.ClientSecurityContext(credential=c_cred, target_name=krb_env.service)
+    c_ctx = sspilib.ClientSecurityContext(credential=c_cred, target_name=krb_env.acceptor_spn)
     s_ctx = sspilib.ServerSecurityContext(credential=s_cred)
     exchange(c_ctx, s_ctx)
 
@@ -57,10 +66,19 @@ def test_kerberos_mutual_auth(krb_env: KerberosEnvironment) -> None:
 
 
 def test_kerberos_keytab_initiator(krb_env: KerberosEnvironment) -> None:
-    c_cred = sspilib.KeytabCredential(krb_env.keytab_user, krb_env.keytab_user_keytab, protocol="Kerberos")
-    s_cred = sspilib.KeytabCredential(krb_env.service, krb_env.service_keytab, protocol="Kerberos", usage="accept")
+    c_cred = sspilib.KeytabCredential(
+        krb_env.initiator_username,
+        krb_env.initiator_keytab,
+        protocol="Kerberos",
+    )
+    s_cred = sspilib.KeytabCredential(
+        krb_env.acceptor_spn,
+        krb_env.acceptor_keytab,
+        protocol="Kerberos",
+        usage="accept",
+    )
 
-    c_ctx = sspilib.ClientSecurityContext(credential=c_cred, target_name=krb_env.service)
+    c_ctx = sspilib.ClientSecurityContext(credential=c_cred, target_name=krb_env.acceptor_spn)
     s_ctx = sspilib.ServerSecurityContext(credential=s_cred)
     exchange(c_ctx, s_ctx)
 
@@ -73,13 +91,22 @@ def test_kerberos_keytab_initiator(krb_env: KerberosEnvironment) -> None:
 
 
 def test_kerberos_keytab_acceptor_from_bytes(krb_env: KerberosEnvironment) -> None:
-    with open(krb_env.service_keytab, mode="rb") as fd:
+    with open(krb_env.acceptor_keytab, mode="rb") as fd:
         keytab = fd.read()
 
-    c_cred = sspilib.UserCredential(krb_env.user, krb_env.password, protocol="Kerberos")
-    s_cred = sspilib.KeytabCredential(krb_env.service, keytab, protocol="Kerberos", usage="accept")
+    c_cred = sspilib.UserCredential(
+        krb_env.initiator_username,
+        krb_env.initiator_password,
+        protocol="Kerberos",
+    )
+    s_cred = sspilib.KeytabCredential(
+        krb_env.acceptor_spn,
+        keytab,
+        protocol="Kerberos",
+        usage="accept",
+    )
 
-    c_ctx = sspilib.ClientSecurityContext(credential=c_cred, target_name=krb_env.service)
+    c_ctx = sspilib.ClientSecurityContext(credential=c_cred, target_name=krb_env.acceptor_spn)
     s_ctx = sspilib.ServerSecurityContext(credential=s_cred)
     exchange(c_ctx, s_ctx)
 
@@ -88,15 +115,23 @@ def test_kerberos_keytab_acceptor_from_bytes(krb_env: KerberosEnvironment) -> No
 
 
 def test_kerberos_wrong_password(krb_env: KerberosEnvironment) -> None:
-    cred = sspilib.UserCredential(krb_env.user, f"{krb_env.password}-wrong", protocol="Kerberos")
-    ctx = sspilib.ClientSecurityContext(credential=cred, target_name=krb_env.service)
+    cred = sspilib.UserCredential(
+        krb_env.initiator_username,
+        f"{krb_env.initiator_password}-wrong",
+        protocol="Kerberos",
+    )
+    ctx = sspilib.ClientSecurityContext(credential=cred, target_name=krb_env.acceptor_spn)
 
     with pytest.raises(sr.WindowsError):
         ctx.step()
 
 
 def test_kerberos_unknown_service(krb_env: KerberosEnvironment) -> None:
-    cred = sspilib.UserCredential(krb_env.user, krb_env.password, protocol="Kerberos")
+    cred = sspilib.UserCredential(
+        krb_env.initiator_username,
+        krb_env.initiator_password,
+        protocol="Kerberos",
+    )
     ctx = sspilib.ClientSecurityContext(credential=cred, target_name=f"HTTP/missing.{krb_env.realm.lower()}")
 
     with pytest.raises(sr.WindowsError):
@@ -104,14 +139,25 @@ def test_kerberos_unknown_service(krb_env: KerberosEnvironment) -> None:
 
 
 def test_kerberos_acceptor_wrong_keytab(krb_env: KerberosEnvironment) -> None:
-    # The user keytab has no key for the service so the acceptor cannot
-    # decrypt the ticket.
-    c_cred = sspilib.UserCredential(krb_env.user, krb_env.password, protocol="Kerberos")
-    s_cred = sspilib.KeytabCredential(krb_env.service, krb_env.keytab_user_keytab, protocol="Kerberos", usage="accept")
+    # The initiator keytab has no key for the service so the acceptor cannot
+    # decrypt the ticket. Windows first replies with a KRB-ERROR so the
+    # initiator retries, it only fails once the retried AP-REQ is rejected.
+    c_cred = sspilib.UserCredential(
+        krb_env.initiator_username,
+        krb_env.initiator_password,
+        protocol="Kerberos",
+    )
+    s_cred = sspilib.KeytabCredential(
+        krb_env.acceptor_spn,
+        krb_env.initiator_keytab,
+        protocol="Kerberos",
+        usage="accept",
+    )
 
-    c_ctx = sspilib.ClientSecurityContext(credential=c_cred, target_name=krb_env.service)
+    c_ctx = sspilib.ClientSecurityContext(credential=c_cred, target_name=krb_env.acceptor_spn)
     s_ctx = sspilib.ServerSecurityContext(credential=s_cred)
 
-    c_token = c_ctx.step()
-    with pytest.raises(sr.WindowsError):
-        s_ctx.step(c_token)
+    with pytest.raises(sr.WindowsError) as e:
+        exchange(c_ctx, s_ctx)
+
+    assert e.value.winerror == -2146893022  # SEC_E_WRONG_PRINCIPAL

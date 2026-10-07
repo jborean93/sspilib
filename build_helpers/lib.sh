@@ -1,21 +1,8 @@
 #!/bin/bash
 
-# The version of https://www.powershellgallery.com/packages/Obol installed to
-# run a KDC for the Kerberos tests when the module is not already present.
-OBOL_VERSION="0.1.0-beta1"
-
 lib::setup::system_requirements() {
     if [ x"${GITHUB_ACTIONS}" = "xtrue" ]; then
         echo "::group::Installing System Requirements"
-    fi
-
-    if ! lib::is_windows; then
-        echo "Not running on Windows, the Kerberos tests will be skipped"
-    elif command -v pwsh > /dev/null 2>&1; then
-        echo "Checking the Obol PowerShell module for the Kerberos tests is installed"
-        pwsh -NoProfile -NonInteractive -File build_helpers/install-obol.ps1 -Version "${OBOL_VERSION}"
-    else
-        echo "pwsh is not available, the Kerberos tests will be skipped"
     fi
 
     if [ x"${GITHUB_ACTIONS}" = "xtrue" ]; then
@@ -73,9 +60,9 @@ lib::tests::run() {
     # The Kerberos tests are Windows only, sspi-rs cannot accept Kerberos
     # tokens or use keytab credentials. The Obol KDC runs in the pwsh process
     # that starts pytest so it must wrap the whole run.
-    if lib::is_windows && lib::kerberos::available; then
+    if lib::is_windows; then
         echo "Running the tests with an Obol KDC for the Kerberos tests"
-        pwsh -NoProfile -NonInteractive -File build_helpers/kerberos-env.ps1 \
+        pwsh -NoProfile -NonInteractive -File build_helpers/run-with-kdc.ps1 \
             python -m pytest "${PYTEST_ARGS[@]}"
     else
         echo "Running the tests without a KDC, the Kerberos tests will be skipped"
@@ -89,10 +76,4 @@ lib::tests::run() {
 
 lib::is_windows() {
     [ "${OS:-}" = "Windows_NT" ]
-}
-
-lib::kerberos::available() {
-    command -v pwsh > /dev/null 2>&1 || return 1
-
-    pwsh -NoProfile -NonInteractive -Command 'Import-Module -Name Obol -ErrorAction Stop' > /dev/null 2>&1
 }
